@@ -1,0 +1,35 @@
+Negative values
+Set points
+explain activities and steps columns
+recipes start incremental times and problems
+explain cycles in datasets or how to understand it
+explain activities and steps columns
+
+explain these records:
+-- Caustic	Pre Rinse	Circulation	
+-- Caustic	Caustic	    Fill To Tank
+-- frequency by recipes by object
+
+
+
+## Use case
+
+where the wastage in cycle? (flow rates)
+Thresholds?
+
+-- TACT parameters
+temperature, action (mechanical), Conductivity, time (edited) 
+alerting system for time overload on diff steps of CIP
+
+-------- Call with Ayush -----------
+# RE-capturation Tank
+
+cleaning time - return flow > SP & K > SP K
+
+Cleaning time thresholds- unknown for all the processes
+
+
+CIP time
+documentations and do development on it
+
+
