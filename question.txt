@@ -33,3 +33,13 @@ CIP time
 documentations and do development on it
 
 
+-----question for ayush or danone
+Acid alerts use the wrong threshold. Acid Total Time in the Summary sheet is Mid Rinse + Acid circulation. 
+For PMT-1 that is 10.67 + 7.0 = 17.67 min, and the same holds for every object I checked. 
+The notebook compares that number against the log's Acid activity alone, so the acid check is too 
+lenient by the whole mid-rinse time. Caustic is fine: its threshold is the caustic fill 
+and circulation steps, which matches the log's Caustic activity.
+
+Back-to-back cleans get merged into one "cycle". - we need to define the cycles
+
+30% of cycles can't be checked.  - object mapping
