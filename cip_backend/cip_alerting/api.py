@@ -584,6 +584,70 @@ class ReplayService:
         return json_safe({'clock': clock, 'period': period if period in PERIODS else '24h', 'plant': plant,
                           'lines': lines_out, 'history': history, 'status': self.status()})
 
+    def day(self, date: str) -> dict:
+        """What happened on one plant day (for the Lines page drill-down): runs completed that day per line,
+        which timed steps ran over their limit, and every run that went over, with its alerts."""
+        try:
+            start = pd.Timestamp(date).normalize()
+        except (ValueError, TypeError):
+            raise ApiError(HTTPStatus.BAD_REQUEST, 'date must look like 2026-07-21')
+        end = start + pd.Timedelta(days=1)
+        tolerance = self.settings.duration_tolerance
+        with self.lock:
+            clock = self.monitor.clock
+            runs = [c for c in self.monitor.closed_cycles
+                    if start <= c['Cycle End'] < end and (clock is None or c['Cycle End'] <= clock)]
+            by_cycle: dict[tuple, list[Alert]] = {}
+            raised = 0
+            for alert in self.monitor.alerts.values():
+                if alert.proposed:
+                    continue
+                by_cycle.setdefault((alert.line, alert.object, alert.cycle_number), []).append(alert)
+                raised += start <= alert.raised_at < end
+            names = sorted({key[0] for key in set(self.known_objects) | set(self.monitor.objects)})
+        lines = {name: {'line': name, 'runs': 0, 'withinLimits': 0, 'overLimit': 0,
+                        'plannedMinutes': 0.0, 'actualMinutes': 0.0} for name in names}
+        steps = {activity: 0 for activity in DURATION_THRESHOLDS}
+        over_runs = []
+        for row in runs:
+            entry = lines.setdefault(row['Line'], {'line': row['Line'], 'runs': 0, 'withinLimits': 0, 'overLimit': 0,
+                                                   'plannedMinutes': 0.0, 'actualMinutes': 0.0})
+            entry['runs'] += 1
+            entry['withinLimits'] += row['Status'] == 'OK'
+            entry['overLimit'] += row['Status'] == 'ALERT'
+            breaches = []
+            for activity in DURATION_THRESHOLDS:
+                minutes, threshold = row.get(activity), row.get(f'{activity} Threshold (min)')
+                if minutes is None or threshold is None or pd.isna(minutes) or pd.isna(threshold):
+                    continue
+                entry['plannedMinutes'] += float(threshold)
+                entry['actualMinutes'] += float(minutes)
+                if row.get(f'{activity} Breach'):
+                    steps[activity] += 1
+                    limit = duration_limit(threshold, tolerance)
+                    breaches.append({'activity': activity, 'label': ACTIVITY_LABELS[activity],
+                                     'minutes': round(float(minutes), 1), 'limit': round(float(limit), 1),
+                                     'overMinutes': round(float(minutes) - float(limit), 2)})
+            if row['Status'] == 'ALERT':
+                code, name = split_object(row['Object'])
+                alerts = sorted(by_cycle.get((row['Line'], row['Object'], row['Cycle Number']), ()), key=lambda a: a.raised_at)
+                over_runs.append({'line': row['Line'], 'objectId': row['Object'], 'code': code, 'name': name,
+                                  'cycleNumber': row['Cycle Number'], 'start': row['Cycle Start'], 'end': row['Cycle End'],
+                                  'breaches': breaches,
+                                  'alerts': [{'id': a.id, 'phase': a.phase, 'acknowledgedAt': a.acknowledged_at}
+                                             for a in alerts if row['Cycle Start'] <= a.raised_at <= row['Cycle End']]})
+        over_runs.sort(key=lambda r: -sum(b['overMinutes'] for b in r['breaches']))
+        line_list = [dict(v, plannedMinutes=round(v['plannedMinutes'], 1), actualMinutes=round(v['actualMinutes'], 1))
+                     for v in sorted(lines.values(), key=lambda v: v['line'])]
+        totals = {key: sum(v[key] for v in line_list) for key in ('runs', 'withinLimits', 'overLimit')}
+        totals.update(plannedMinutes=round(sum(v['plannedMinutes'] for v in line_list), 1),
+                      actualMinutes=round(sum(v['actualMinutes'] for v in line_list), 1), alertsRaised=raised)
+        return json_safe({'date': start.strftime('%Y-%m-%d'), 'partial': clock is not None and start <= clock < end,
+                          'totals': totals, 'lines': line_list,
+                          'steps': [{'activity': a, 'label': ACTIVITY_LABELS[a], 'overLimit': n}
+                                    for a, n in sorted(steps.items(), key=lambda kv: -kv[1])],
+                          'overRuns': over_runs})
+
     # ------------------------------------------------------------ helpers
     @staticmethod
     def _trends(cycle: CycleState, phase: str, rule_set: RuleSet | None = None) -> dict:
@@ -765,6 +829,8 @@ def make_handler(service: ReplayService, web_dir: Path = WEB_DIR):
                 if parts == ['api', 'status']:
                     with service.lock:
                         return self._json(service.status())
+                if parts == ['api', 'lines', 'day']:
+                    return self._json(service.day(query.get('date', '')))
                 if parts == ['api', 'lines']:
                     period = query.get('period', '24h')
                     if period not in PERIODS:

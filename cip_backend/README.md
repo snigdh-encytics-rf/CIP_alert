@@ -4,16 +4,18 @@ The logic from `denon_cip_alerting_clean.ipynb`, split into Python modules for t
 
 ## Start the UI
 
+Setup for a new machine (Docker or plain Python, step by step) is in the [project README](../README.md). In short, from this folder with Python 3.10–3.12:
+
 ```bash
-cd cip_backend
-/opt/anaconda3/bin/python3 scripts/serve.py --open      # http://127.0.0.1:8000
+pip install -r requirements.txt
+python scripts/serve.py --open      # http://127.0.0.1:8000
 ```
 
 The server loads the logs and processes all but the last 2 days instantly, so the page opens with history. It then plays the rest as live 60-second pings at 60× speed: one simulated minute per second. Use `--speed 600` to go faster, or `--start "2026-07-10 06:00"` to choose where live play begins. The page refreshes every 2 seconds.
 
-The page has three working views in the top bar: **Overview** (alerts and the debug panel), **Run history** (`/#runs`) and **Audit log** (`/#audit`). "Objects" and "Recipes" are marked *Soon* and are not links.
+The top bar has four views: **Lines** (`/`, the manager view), **Alerts** (`/#alerts`, alerts and the alert panel), **Run history** (`/#runs`) and **Audit log** (`/#audit`).
 
-It uses only Python's standard library for the web server. The installed FastAPI and Starlette versions don't work together.
+The web server uses only Python's standard library.
 
 ## How it works
 
@@ -94,7 +96,7 @@ monitor.trend(alert_id, 'Return Temp')      # trend line for the debug panel
 
 ## Verified
 
-All 99 tests pass (about 5 min). `tests/ui/test_e2e.py` (31 tests, including the Lines page, its figures and the drill-down) drives the v2 page in headless Chrome at 1000–1920 px wide: summary numbers against every line × period, selection by mouse and keyboard, other alerts and notification links, one-click acknowledge (counts, audit log, reload, server restart), the run dialog, run history and audit log (filters, CSV), live updates, the loading, disconnected, replay-ended, live and stale states, and no clipped or overflowing text. It skips itself when Chrome or `websocket-client` is missing. The 8 tests in `test_parity.py` cover:
+All 101 tests pass (about 5 min). `tests/ui/test_e2e.py` (33 tests, including the Lines page, its figures, the day breakdown and the drill-downs) drives the v2 page in headless Chrome at 1000–1920 px wide: summary numbers against every line × period, selection by mouse and keyboard, other alerts and notification links, one-click acknowledge (counts, audit log, reload, server restart), the run dialog, run history and audit log (filters, CSV), live updates, the loading, disconnected, replay-ended, live and stale states, and no clipped or overflowing text. It skips itself when Chrome or `websocket-client` is missing. The 8 tests in `test_parity.py` cover:
 
 - **Batch matches the notebook**: 38,943 records, 699 cycles (329 OK, 211 NO REFERENCE, 159 ALERT), 221 breaches (112 Caustic, 64 Pre Rinse, 28 Final Rinse, 17 Acid) and the same 18 warnings.
 - **Live matches batch**: replaying every reading gives the same 699 cycles (times, record counts, minutes per activity, median flows and status) and the same 221 alerts with the same final values.
@@ -104,6 +106,7 @@ All 99 tests pass (about 5 min). `tests/ui/test_e2e.py` (31 tests, including the
 | Endpoint | Returns |
 |---|---|
 | `GET /api/status` | Replay state (`warming_up`, `live`, `finished`) and the clock |
+| `GET /api/lines/day?date=2026-07-21` | One plant day: totals, runs per line, over-limit count per timed step, and each over-limit run with its overrun steps (minutes, limit, minutes over) and alert ids |
 | `GET /api/lines?period=24h\|7d\|all&days=14` | Manager view: plant totals and per line runs, runs within limits / over limit, planned and taken minutes, objects cleaned, runs in progress, alerts; plus a daily history (`days`, 1–60) per line |
 | `GET /api/overview?period=24h\|7d\|all&line=M11W01` | Summary band and one row per object with its alerts |
 | `GET /api/alerts/<id>[?others=all]` | Debug panel data: alert, TACT values, trends, cycle activity times, flows, data checks, earlier alerts, and `history` (this alert's audit trail, oldest first: raised, notifications, acknowledgement with who, when and note) |
@@ -123,7 +126,7 @@ Alert IDs contain `:` and spaces, so URL-encode them.
 
 v2 keeps the same backend, API and data, with a calmer page. v1's fuller page is in git under the `v1.0` tag.
 
-- **Lines** (the landing page, `/`): the manager view, always covering all four lines (the line selector is hidden here; the period selector applies). Five headline figures for the plant (runs within their time limits, CIP time taken against the planned reference time, objects cleaned, runs in progress, open alerts) and one card per CIP line: objects and whether all were cleaned, runs in progress, meters for runs within limits and CIP time against plan (the tick is the planned time; red when over), and the line's open alerts. **Inspect alerts →** (or a click on the card) opens the Alerts page filtered to that line. Below, the last 14 days (hover for figures): runs per day within / over limit; hours taken per day with a mark at the planned hours (red when over); and a line × day grid shaded by the share of runs within limits (darker is better, value in each cell).
+- **Lines** (the landing page, `/`): the manager view, always covering all four lines (the line selector is hidden here; the period selector applies). Five headline figures for the plant (runs within their time limits, CIP time taken against the planned reference time, objects cleaned, runs in progress, open alerts) and one card per CIP line: objects and whether all were cleaned, runs in progress, meters for runs within limits and CIP time against plan (the tick is the planned time; red when over), and the line's open alerts. **Inspect alerts →** (or a click on the card) opens the Alerts page filtered to that line. Below, two charts of the last 14 days (hover for figures): runs per day within / over limit, and hours taken per day with a mark at the planned hours (red when over). **Click a day** (or Tab to it and press Enter) to open that day's breakdown under the charts: runs, within / over limit, CIP time against plan and alerts raised; runs by line; which steps ran over; and every run over its limit with how far each step overran. A run opens its alert on the Alerts page. Click the day again or × to close.
 - *Planned time* is the sum of the reference times of the timed activities (pre-rinse, caustic, acid, final rinse) a run went through; *taken* is the minutes those same activities took. Runs without reference times count as runs but not towards time or "within limits".
 
 - **Alerts** (`/#alerts`, the former overview): three summary cards and one alert list. **Alerts** (with the acknowledged count beside it; the list header shows how many are open) is the default view. **Objects with alerts · N of 29** and **CIP runs in progress** filter the list: all objects including those without alerts, or only objects being cleaned now (click again, or *Show all alerts*, to clear). The panel keeps its alert while filtering. Each object with alerts is one row: its newest open alert, time against the limit, and "+N more". Rows group into *Needs attention* and *Acknowledged*; objects without alerts collapse into one "✓ N objects without alerts" line that expands.

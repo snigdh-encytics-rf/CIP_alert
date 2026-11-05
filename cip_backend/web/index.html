@@ -260,17 +260,50 @@ dialog::backdrop{background:rgba(14,27,51,.32)}
 .lft .go:hover{background:var(--blue-600)}
 .lcard.na{cursor:default}.lcard.na:hover{transform:none;border-color:var(--line)}
 .charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.daycard{margin-top:16px;padding:22px 24px;scroll-margin-top:84px}
+.dhd{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.dhd h3{margin:0;font-size:18px;font-weight:700;color:var(--navy)}
+.dhd .meta{color:var(--muted)}
+.dhd .x{margin-left:auto}
+.dstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0 22px}
+.dstat{background:var(--grey-50);border-radius:var(--r-md);padding:12px 16px}
+.dstat .k{color:var(--muted);font-size:13px;font-weight:500}
+.dstat .v{font-size:24px;font-weight:700;margin-top:2px;letter-spacing:-.01em}
+.dstat .v small{font-size:13px;color:var(--muted);font-weight:500;margin-left:6px}
+.dstat .v.red{color:var(--red)}
+.dgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.35fr);gap:28px}
+.dgrid h4{margin:0 0 12px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+.hb{display:grid;grid-template-columns:76px minmax(0,1fr) auto;gap:10px;align-items:center;margin-bottom:12px}
+.hb .n{font-weight:600}
+.hb .bars{display:flex;gap:2px;height:16px}
+.hb .bars i{height:100%;border-radius:4px;min-width:3px}
+.hb .c{font-size:13px;color:var(--muted);white-space:nowrap;text-align:right}
+.hb .c b{color:var(--text)}
+.oruns{display:flex;flex-direction:column;gap:6px;max-height:300px;overflow:auto;margin-right:-6px;padding-right:6px}
+.orun{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 10px;align-items:center;text-align:left;border:1px solid var(--line);background:#fff;border-radius:var(--r-sm);padding:10px 12px;cursor:pointer}
+.orun:hover{border-color:var(--grey-200);background:#FAFBFC}
+.orun b{color:var(--navy)}
+.orun .o{min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.orun .o span{color:var(--muted)}
+.orun .go2{color:var(--blue);font-weight:600;font-size:13px;white-space:nowrap}
+.orun .br{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:6px}
+.orun .chip{font-size:12px;padding:2px 8px}
+.dempty{color:var(--muted)}
 .chart{padding:18px 20px 12px;position:relative;min-width:0}
 .chart.wide{grid-column:1/-1}
-.chart h3{margin:0;font-size:15px;font-weight:600}
-.chart .csub{color:var(--muted);font-size:12.5px;margin-top:2px}
-.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.chart h3{margin:0;font-size:16px;font-weight:700}
+.chart .csub{color:var(--muted);font-size:13px;margin-top:2px}
+.legend .hint{margin-left:auto;color:var(--blue);font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:12px;font-size:13px;color:var(--text)}
 .legend span{display:inline-flex;align-items:center;gap:6px}
-.legend i{width:10px;height:10px;border-radius:3px}
+.legend i{width:12px;height:12px;border-radius:3px}
 .legend i.ln{height:3px;width:14px;border-radius:2px}
 .plot{margin-top:6px;position:relative}
 .plot svg{display:block;width:100%;overflow:visible}
-.plot svg text{font:11.5px var(--font);fill:var(--muted)}
+.plot svg text{font:12.5px var(--font);fill:var(--muted)}
+.plot svg text.sel{fill:var(--text);font-weight:700}
+.plot svg rect.hit{cursor:pointer;outline:none}
+.plot svg rect.hit:focus-visible{stroke:var(--blue);stroke-width:2}
 .plot svg text.dl{font-weight:600;fill:var(--text)}
 .tip{position:absolute;pointer-events:none;background:#0B1730;color:#fff;border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.5;white-space:nowrap;box-shadow:0 8px 24px rgba(11,23,48,.25);z-index:5;transform:translate(-50%,-100%)}
 .tip b{font-weight:600}
@@ -278,6 +311,8 @@ dialog::backdrop{background:rgba(14,27,51,.32)}
 
 @media (max-width:1180px){
   .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .dgrid{grid-template-columns:minmax(0,1fr)}
+  .dstats{grid-template-columns:repeat(2,minmax(0,1fr))}
   .charts{grid-template-columns:minmax(0,1fr)}
   .grid{grid-template-columns:minmax(0,1fr)}
   .panel{position:static;max-height:none}
@@ -328,10 +363,10 @@ dialog::backdrop{background:rgba(14,27,51,.32)}
     </div>
     <div class="lgrid" id="lineCards"></div>
     <div class="charts">
-      <div class="card chart"><h3>CIP runs per day</h3><div class="csub">Completed runs per day, within or over their time limits · last 14 days</div><div class="legend" id="lg1"></div><div class="plot" id="ch1"></div></div>
-      <div class="card chart"><h3>CIP time per day</h3><div class="csub">Hours taken per day; the dark mark is the planned (reference) time · last 14 days</div><div class="legend" id="lg2"></div><div class="plot" id="ch2"></div></div>
-      <div class="card chart wide"><h3>Runs within limits, by line and day</h3><div class="csub">Share of each day's completed runs that stayed within their time limits · darker is better · last 14 days</div><div class="legend" id="lg3"></div><div class="plot" id="ch3"></div></div>
+      <div class="card chart"><h3>CIP runs per day</h3><div class="csub">Completed runs, within or over their time limits · last 14 days</div><div class="legend" id="lg1"></div><div class="plot" id="ch1"></div></div>
+      <div class="card chart"><h3>CIP time per day</h3><div class="csub">Hours taken; the dark mark is the planned time · last 14 days</div><div class="legend" id="lg2"></div><div class="plot" id="ch2"></div></div>
     </div>
+    <div class="card daycard" id="dayPanel" hidden aria-live="polite"></div>
   </section>
 
   <!-- Alerts (drill-down) -->
@@ -392,7 +427,7 @@ const LABELS = {'Pre Rinse':'Pre-rinse','Caustic':'Caustic wash','Mid Rinse':'Mi
 const PERIOD_TEXT = {'24h':'last 24 hours','7d':'last 7 days','all':'all data'};
 const EVENTS = {alert_raised:'Alert raised', acknowledged:'Acknowledged', notification_sent:'Notification sent',
   notification_failed:'Notification failed', replay_restarted:'Replay restarted', service_started:'Service started'};
-const state = window.state = {view:'lines', lines:null, period:'24h', line:'', selectedId:null, overview:null, detail:null,
+const state = window.state = {view:'lines', lines:null, day:null, dayData:null, period:'24h', line:'', selectedId:null, overview:null, detail:null,
   connected:true, everConnected:false, picked:false, othersAll:false, filter:'all', showQuiet:false, acking:false, runs:null, audit:null};
 
 // ---------- helpers ----------
@@ -441,6 +476,11 @@ async function refresh(){
       const ln = await api(`/api/lines?${lq}`);
       if (g !== gen) return;
       state.lines = ln;
+      if (state.day){
+        const dd = await api(`/api/lines/day?date=${state.day}`);
+        if (g !== gen) return;
+        state.dayData = dd;
+      }
     }
     pickSelection();
     if (state.selectedId){
@@ -710,6 +750,7 @@ function renderLines(){
         <button class="go" type="button" data-line="${esc(l.line)}" data-key="go:${esc(l.line)}">Inspect alerts →</button></div></div>`;
   }).join(''));
   renderCharts();
+  renderDay();
 }
 function inspectLine(line){
   state.line = line; $('line').value = line;
@@ -731,7 +772,7 @@ function topRounded(x, y, w, h, r){
   return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
 }
 function frame(el, days, yMax, fmtY, right = 16){
-  const W = Math.max(320, el.clientWidth || 600), H = 230, m = {l: 44, r: right, t: 12, b: 26};
+  const W = Math.max(320, el.clientWidth || 600), H = 300, m = {l: 48, r: right, t: 14, b: 30};
   const iw = W - m.l - m.r, ih = H - m.t - m.b, step = iw / days.length;
   const y = v => m.t + ih - (v / yMax) * ih;
   let g = '';
@@ -740,8 +781,14 @@ function frame(el, days, yMax, fmtY, right = 16){
     g += `<line x1="${m.l}" x2="${W - m.r}" y1="${yy}" y2="${yy}" stroke="${i ? '#E7ECF1' : '#C9D3DD'}" stroke-width="1"/>`;
     g += `<text x="${m.l - 8}" y="${yy + 4}" text-anchor="end">${fmtY(v)}</text>`;
   }
-  const every = Math.ceil(days.length / Math.max(2, Math.floor(iw / 64)));
-  days.forEach((d, i) => { if ((days.length - 1 - i) % every === 0) g += `<text x="${m.l + step * (i + .5)}" y="${H - 6}" text-anchor="middle">${dayLabel(d)}</text>`; });
+  const every = Math.ceil(days.length / Math.max(2, Math.floor(iw / 50)));
+  const si = days.indexOf(state.day);
+  days.forEach((d, i) => {
+    const sel = i === si;
+    if (!sel && si >= 0 && Math.abs(i - si) * step < 46) return;   // keep the selected day's label clear
+    if (sel) g += `<rect x="${m.l + step * i + 1}" y="${m.t}" width="${step - 2}" height="${ih}" rx="6" fill="#005EB8" fill-opacity=".09"/>`;
+    if (sel || (days.length - 1 - i) % every === 0) g += `<text x="${m.l + step * (i + .5)}" y="${H - 8}" text-anchor="middle" class="${sel ? 'sel' : ''}">${dayLabel(d)}</text>`;
+  });
   return {W, H, m, iw, ih, step, y, g};
 }
 function mountChart(el, svg, f, tipFor){
@@ -758,17 +805,18 @@ function mountChart(el, svg, f, tipFor){
       s.querySelectorAll(`.hov`).forEach(h => h.setAttribute('opacity', h.dataset.i === String(i) ? '1' : '0'));
     });
     r.addEventListener('mouseleave', () => { tip.hidden = true; s.querySelectorAll('.hov').forEach(h => h.setAttribute('opacity', '0')); });
+    r.addEventListener('click', () => pickDay(+r.dataset.i));
+    r.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); pickDay(+r.dataset.i); } });
   });
 }
 function hits(f){
   return f.g + Array.from({length: Math.round(f.iw / f.step)}, (_, i) =>
     `<rect class="hov" data-i="${i}" x="${f.m.l + f.step * i}" y="${f.m.t}" width="${f.step}" height="${f.ih}" fill="#0B1730" fill-opacity=".04" opacity="0"/>`).join('');
 }
-function hitRects(f, n){
-  return Array.from({length: n}, (_, i) => `<rect class="hit" data-i="${i}" x="${f.m.l + f.step * i}" y="${f.m.t}" width="${f.step}" height="${f.ih}" fill="transparent"/>`).join('');
+function hitRects(f, n, days){
+  return Array.from({length: n}, (_, i) => `<rect class="hit" data-i="${i}" x="${f.m.l + f.step * i}" y="${f.m.t}" width="${f.step}" height="${f.ih}" fill="transparent"
+    tabindex="0" role="button" aria-pressed="${days[i] === state.day}" aria-label="${dayLabel(days[i])}: show what happened that day"/>`).join('');
 }
-const SEQ = ['#cde2fb', '#b7d3f6', '#9ec5f4', '#86b6ef', '#6da7ec', '#5598e7', '#3987e5', '#2a78d6', '#256abf', '#1c5cab', '#184f95', '#104281', '#0d366b'];
-const seq = v => SEQ[Math.min(SEQ.length - 1, Math.round(v / 100 * (SEQ.length - 1)))];
 function renderCharts(){
   const L = state.lines, H = L.history, days = H.days;
   if (!days.length) return;
@@ -778,65 +826,83 @@ function renderCharts(){
 
   // 1. runs per day: stacked within (blue) + over limit (red)
   { const el = $('ch1'), f = frame(el, days, niceMax(Math.max(...within.map((w, i) => w + over[i]))), v => Math.round(v));
-    const bw = Math.min(28, f.step * .62); let b = hits(f);
+    const bw = Math.min(40, f.step * .66); let b = hits(f);
     days.forEach((_, i) => {
       const x = f.m.l + f.step * (i + .5) - bw / 2, yw = f.y(within[i]), yo = f.y(within[i] + over[i]);
       if (within[i]) b += `<path d="${topRounded(x, yw, bw, f.y(0) - yw, over[i] ? 0 : 4)}" fill="#005EB8"/>`;
       if (over[i]) b += `<path d="${topRounded(x, yo, bw, Math.max(0, yw - yo - 2), 4)}" fill="#C8281C"/>`;
     });
-    $('lg1').innerHTML = `<span><i style="background:#005EB8"></i>Within limits</span><span><i style="background:#C8281C"></i>Over limit</span>`;
-    mountChart(el, b + hitRects(f, days.length), f, i => `${tipDay(days, i)}<br><span class="sw" style="background:#005EB8"></span>${within[i]} within limits<br><span class="sw" style="background:#C8281C"></span>${over[i]} over limit`); }
+    $('lg1').innerHTML = `<span><i style="background:#005EB8"></i>Within limits</span><span><i style="background:#C8281C"></i>Over limit</span><span class="hint">Click a day for details</span>`;
+    mountChart(el, b + hitRects(f, days.length, days), f, i => `${tipDay(days, i)}<br><span class="sw" style="background:#005EB8"></span>${within[i]} within limits<br><span class="sw" style="background:#C8281C"></span>${over[i]} over limit`); }
 
   // 2. CIP hours per day: one bar (hours taken) with a marker at the planned hours
   { const el = $('ch2'), ph = planned.map(v => v / 60), ah = actual.map(v => v / 60);
     const f = frame(el, days, niceMax(Math.max(...ph, ...ah)), v => `${Math.round(v)} h`);
-    const bw = Math.min(28, f.step * .62); let b = hits(f), marks = '';
+    const bw = Math.min(40, f.step * .66); let b = hits(f), marks = '';
     days.forEach((_, i) => {
       const x = f.m.l + f.step * (i + .5) - bw / 2;
       b += `<path d="${topRounded(x, f.y(ah[i]), bw, f.y(0) - f.y(ah[i]), 4)}" fill="${ah[i] > ph[i] ? '#C8281C' : '#005EB8'}"/>`;
       if (ph[i]) marks += `<line x1="${x - 4}" x2="${x + bw + 4}" y1="${f.y(ph[i])}" y2="${f.y(ph[i])}" stroke="#fff" stroke-width="6" stroke-linecap="round"/>`
                        + `<line x1="${x - 4}" x2="${x + bw + 4}" y1="${f.y(ph[i])}" y2="${f.y(ph[i])}" stroke="#0B1730" stroke-width="2.5" stroke-linecap="round"/>`;
     });
-    $('lg2').innerHTML = `<span><i style="background:#005EB8"></i>Taken, within plan</span><span><i style="background:#C8281C"></i>Taken, over plan</span><span><i class="ln" style="background:#0B1730"></i>Planned</span>`;
-    mountChart(el, b + marks + hitRects(f, days.length), f, i => `${tipDay(days, i)}<br>Taken <b>${ah[i].toFixed(1)} h</b><br>Planned ${ph[i].toFixed(1)} h${ph[i] ? `<br>${ah[i] >= ph[i] ? '+' : '−'}${Math.abs(Math.round((ah[i] - ph[i]) / ph[i] * 100))}% vs plan` : ''}`); }
+    $('lg2').innerHTML = `<span><i style="background:#005EB8"></i>Taken, within plan</span><span><i style="background:#C8281C"></i>Taken, over plan</span><span><i class="ln" style="background:#0B1730"></i>Planned</span><span class="hint">Click a day for details</span>`;
+    mountChart(el, b + marks + hitRects(f, days.length, days), f, i => `${tipDay(days, i)}<br>Taken <b>${ah[i].toFixed(1)} h</b><br>Planned ${ph[i].toFixed(1)} h${ph[i] ? `<br>${ah[i] >= ph[i] ? '+' : '−'}${Math.abs(Math.round((ah[i] - ph[i]) / ph[i] * 100))}% vs plan` : ''}`); }
 
-  // 3. heatmap: lines x days, shade = share of runs within limits, value printed in the cell
-  { const el = $('ch3'), W = Math.max(320, el.clientWidth || 600), left = 82, top = 4, ch = 36, gap = 3;
-    const cw = (W - left) / days.length, Hh = top + names.length * (ch + gap) + 24;
-    let g = '';
-    names.forEach((n, r) => {
-      const y = top + r * (ch + gap), S = H.lines[n];
-      g += `<text x="0" y="${y + ch / 2 + 4}" class="dl">${n}</text>`;
-      days.forEach((_, i) => {
-        const x = left + i * cw, runs = S.runs[i], v = runs ? Math.round(S.withinLimits[i] / runs * 100) : null;
-        const fill = v == null ? '#F1F4F7' : seq(v), dark = v != null && v >= 58;
-        g += `<rect x="${x + gap / 2}" y="${y}" width="${cw - gap}" height="${ch}" rx="5" fill="${fill}"/>`;
-        g += `<text x="${x + cw / 2}" y="${y + ch / 2 + 4}" text-anchor="middle" style="fill:${v == null ? '#8D99A8' : dark ? '#fff' : '#0B1730'};font-weight:600">${v == null ? '–' : cw > 34 ? v + '%' : v}</text>`;
-        g += `<rect class="cell" data-r="${r}" data-i="${i}" x="${x}" y="${y}" width="${cw}" height="${ch}" fill="transparent"/>`;
-      });
-    });
-    const every = Math.ceil(days.length / Math.max(2, Math.floor((W - left) / 64)));
-    days.forEach((d, i) => { if ((days.length - 1 - i) % every === 0) g += `<text x="${left + cw * (i + .5)}" y="${Hh - 6}" text-anchor="middle">${dayLabel(d)}</text>`; });
-    $('lg3').innerHTML = `<span>0%</span><span style="display:inline-block;width:140px;height:10px;border-radius:5px;background:linear-gradient(90deg,${SEQ.join(',')})"></span><span>100% within limits</span>
-      <span><i style="background:#F1F4F7;box-shadow:inset 0 0 0 1px #DCE3EA"></i>No completed runs</span>`;
-    if (el.__svg !== g){
-      el.__svg = g;
-      el.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" height="${Hh}" role="img" aria-label="Share of runs within limits per line and day">${g}</svg><div class="tip" hidden></div>`;
-      const tip = el.querySelector('.tip');
-      el.querySelectorAll('rect.cell').forEach(c => {
-        c.addEventListener('mouseenter', () => {
-          const n = names[+c.dataset.r], i = +c.dataset.i, S = H.lines[n];
-          tip.innerHTML = `${tipDay(days, i)}<br>Line <b>${n}</b><br>${S.runs[i] ? `${S.withinLimits[i]} of ${S.runs[i]} runs within limits` : 'No completed runs'}`;
-          tip.hidden = false;
-          tip.style.left = `${Math.min(Math.max((left + cw * (i + .5)) / W * el.clientWidth, 90), el.clientWidth - 90)}px`;
-          tip.style.top = `${(top + +c.dataset.r * (ch + gap)) / Hh * el.clientHeight}px`;
-        });
-        c.addEventListener('mouseleave', () => { tip.hidden = true; });
-      });
-    } }
 }
+function pickDay(i){
+  const d = state.lines?.history?.days?.[i]; if (!d) return;
+  const same = state.day === d;
+  state.day = same ? null : d; state.dayData = null;
+  for (const id of ['ch1', 'ch2']) $(id).__svg = null;
+  renderCharts(); renderDay();
+  if (!same){
+    api(`/api/lines/day?date=${d}`).then(dd => { if (state.day === d){ state.dayData = dd; renderDay(); } }).catch(() => {});
+    requestAnimationFrame(() => $('dayPanel').scrollIntoView({behavior: 'smooth', block: 'nearest'}));
+  }
+}
+function renderDay(){
+  const el = $('dayPanel'), D = state.dayData;
+  if (!state.day){ el.hidden = true; el.__html = null; return; }
+  el.hidden = false;
+  const title = new Date(state.day + 'T00:00').toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long'});
+  const head = (meta) => `<div class="dhd"><h3>${title}</h3><span class="meta">${meta}</span>
+    <button class="x" type="button" id="dayClose" data-key="__dayclose" aria-label="Close day details">×</button></div>`;
+  if (!D || D.date !== state.day){ setHTML(el, head('Loading…')); return; }
+  const T = D.totals, w = pct(T.withinLimits, T.runs);
+  if (!T.runs){ setHTML(el, head(D.partial ? 'so far today' : '') + `<p class="dempty">No CIP runs were completed on this day.</p>`); return; }
+  const maxRuns = Math.max(1, ...D.lines.map(l => l.runs));
+  const lineRows = D.lines.map(l => `<div class="hb"><span class="n">${esc(l.line)}</span>
+      <span class="bars" title="${l.withinLimits} within limits, ${l.overLimit} over limit">${l.withinLimits ? `<i style="width:${l.withinLimits / maxRuns * 100}%;background:#005EB8"></i>` : ''}${l.overLimit ? `<i style="width:${l.overLimit / maxRuns * 100}%;background:#C8281C"></i>` : ''}</span>
+      <span class="c num"><b>${l.runs}</b> run${l.runs === 1 ? '' : 's'}${l.overLimit ? ` · <span style="color:var(--red)">${l.overLimit} over</span>` : ''}</span></div>`).join('');
+  const maxStep = Math.max(1, ...D.steps.map(x => x.overLimit));
+  const stepRows = D.steps.map(x => `<div class="hb"><span class="n">${esc(STEP[x.activity] || x.label)}</span>
+      <span class="bars">${x.overLimit ? `<i style="width:${x.overLimit / maxStep * 100}%;background:#C8281C"></i>` : ''}</span>
+      <span class="c num"><b>${x.overLimit}</b> run${x.overLimit === 1 ? '' : 's'}</span></div>`).join('');
+  const runRows = D.overRuns.map(r => `<button class="orun" type="button" data-alert="${esc(r.alerts[0]?.id || '')}" data-line="${esc(r.line)}" data-key="or:${esc(r.objectId)}:${r.cycleNumber}" ${r.alerts.length ? '' : 'disabled'}>
+      <span class="o"><b>${esc(r.code)}</b> <span>${esc(r.name)} · ${esc(r.line)} · ${hm(r.start)}–${hm(r.end)}</span></span>
+      <span class="go2">${r.alerts.length ? 'Open alert →' : ''}</span>
+      <span class="br">${r.breaches.map(b => `<span class="chip red num">${esc(STEP[b.activity] || b.label)} +${b.overMinutes < 0.05 ? '<0.1' : mins(b.overMinutes)} min</span>`).join('')}</span></button>`).join('');
+  setHTML(el, head(`${T.runs} completed run${T.runs === 1 ? '' : 's'}${D.partial ? ' · so far today' : ''}`) + `
+    <div class="dstats">
+      <div class="dstat"><div class="k">Within limits</div><div class="v num">${w}%<small>${T.withinLimits} of ${T.runs}</small></div></div>
+      <div class="dstat"><div class="k">Over limit</div><div class="v num ${T.overLimit ? 'red' : ''}">${T.overLimit}<small>run${T.overLimit === 1 ? '' : 's'}</small></div></div>
+      <div class="dstat"><div class="k">CIP time taken</div><div class="v num">${hours(T.actualMinutes)} h<small>of ${hours(T.plannedMinutes)} h planned</small></div></div>
+      <div class="dstat"><div class="k">Alerts raised</div><div class="v num">${T.alertsRaised}</div></div>
+    </div>
+    <div class="dgrid">
+      <div><h4>Runs by line</h4>${lineRows}<div class="legend"><span><i style="background:#005EB8"></i>Within limits</span><span><i style="background:#C8281C"></i>Over limit</span></div></div>
+      <div><h4>Steps that ran over</h4>${stepRows}</div>
+      <div><h4>Runs over their limit · ${D.overRuns.length}</h4>${runRows ? `<div class="oruns">${runRows}</div>` : '<p class="dempty">Every run stayed within its limits.</p>'}</div>
+    </div>`);
+}
+$('dayPanel').addEventListener('click', e => {
+  if (e.target.closest('#dayClose')){ state.day = null; state.dayData = null; for (const id of ['ch1', 'ch2']) $(id).__svg = null; renderCharts(); renderDay(); return; }
+  const r = e.target.closest('.orun'); if (!r || !r.dataset.alert) return;
+  state.line = r.dataset.line; $('line').value = r.dataset.line;
+  location.hash = '#alert=' + encodeURIComponent(r.dataset.alert);
+});
 let resizeT = null;
-window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (state.view === 'lines' && state.lines){ for (const id of ['ch1', 'ch2', 'ch3']) $(id).__svg = null; renderCharts(); } }, 150); });
+window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (state.view === 'lines' && state.lines){ for (const id of ['ch1', 'ch2']) $(id).__svg = null; renderCharts(); } }, 150); });
 
 // ---------- run dialog ----------
 function runTable(activities, flows){

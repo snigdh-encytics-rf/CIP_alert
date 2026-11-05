@@ -624,7 +624,7 @@ def test_lines_page_kpis_cards_and_charts(browser, ended):
     n = len(L['history']['days'])
     for chart in ('ch1', 'ch2'):
         assert browser.eval(f"document.querySelectorAll('#{chart} rect.hit').length") == n
-    assert browser.eval("document.querySelectorAll('#ch3 rect.cell').length") == n * len(L['history']['lines'])
+    assert browser.eval("!document.getElementById('ch3')"), 'the line x day grid was removed'
     assert browser.eval("document.getElementById('line').hidden"), 'the Lines page always shows every line'
     assert browser.eval("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
     browser.eval("document.getElementById('ch1').scrollIntoView()")
@@ -650,3 +650,50 @@ def test_inspect_alerts_drills_into_that_line(browser, ended):
     assert browser.eval("document.getElementById('lscope').textContent").startswith('Ambala plant · 4 lines'), 'Lines always shows all lines'
     browser.click('nav a[data-view="overview"]')
     browser.wait_for(f"state.view === 'overview' && state.overview.objects.every(o => o.line === {json.dumps(line)})", 15)
+
+
+
+def test_day_api_matches_the_daily_history(ended):
+    h = ended.get('/api/lines?period=all&days=14')['history']
+    for i in (0, len(h['days']) // 2, len(h['days']) - 1):
+        date = h['days'][i]
+        d = ended.get(f'/api/lines/day?date={date}')
+        assert d['date'] == date
+        assert d['totals']['runs'] == sum(h['lines'][n]['runs'][i] for n in h['lines'])
+        assert d['totals']['overLimit'] == sum(h['lines'][n]['overLimit'][i] for n in h['lines']) == len(d['overRuns'])
+        assert d['totals']['withinLimits'] + d['totals']['overLimit'] <= d['totals']['runs']
+        assert sum(x['overLimit'] for x in d['steps']) == sum(len(r['breaches']) for r in d['overRuns'])
+        assert all(b['overMinutes'] > 0 for r in d['overRuns'] for b in r['breaches'])
+    with pytest.raises(urllib.error.HTTPError) as err:
+        ended.get('/api/lines/day?date=not-a-date')
+    assert err.value.code == 400
+
+
+def test_clicking_a_day_opens_its_breakdown(browser, ended):
+    browser.goto(ended.base + '/')
+    browser.wait_for("document.querySelectorAll('#ch1 rect.hit').length > 0", 20)
+    days = browser.eval('state.lines.history.days')
+    i = len(days) // 2
+    browser.eval("document.getElementById('ch1').scrollIntoView()")
+    box = browser.eval(f"(() => {{ const r = document.querySelectorAll('#ch1 rect.hit')[{i}].getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }})()")
+    browser.send('Input.dispatchMouseEvent', type='mousePressed', x=box[0], y=box[1], button='left', clickCount=1)
+    browser.send('Input.dispatchMouseEvent', type='mouseReleased', x=box[0], y=box[1], button='left', clickCount=1)
+    browser.wait_for(f"state.dayData && state.dayData.date === {json.dumps(days[i])} && document.querySelector('#dayPanel .dstats')", 10)
+    D = browser.eval('state.dayData')
+    assert browser.eval("document.querySelector('#ch1 rect.hit[aria-pressed=true]').dataset.i") == str(i)
+    assert browser.eval("document.querySelector('#ch2 rect.hit[aria-pressed=true]').dataset.i") == str(i), 'both charts mark the day'
+    assert browser.eval("document.querySelectorAll('#dayPanel .orun').length") == len(D['overRuns'])
+    assert f"{D['totals']['runs']} completed run" in browser.eval("document.querySelector('#dayPanel .dhd').textContent")
+    wait_for_poll(browser)
+    assert browser.eval("!document.getElementById('dayPanel').hidden"), 'the panel stays open across polls'
+    if D['overRuns']:
+        run = D['overRuns'][0]
+        browser.click('#dayPanel .orun')
+        browser.wait_for(f"state.view === 'overview' && state.detail && state.detail.alert.id === {json.dumps(run['alerts'][0]['id'])}", 15)
+        assert browser.eval("document.getElementById('line').value") == run['line']
+        browser.goto(ended.base + '/')
+        browser.wait_for("document.querySelectorAll('#ch1 rect.hit').length > 0", 20)
+        browser.eval(f"document.querySelectorAll('#ch1 rect.hit')[{i}].dispatchEvent(new MouseEvent('click'))")
+        browser.wait_for("!document.getElementById('dayPanel').hidden", 5)
+    browser.click('#dayClose')
+    browser.wait_for("document.getElementById('dayPanel').hidden && !state.day", 5)
