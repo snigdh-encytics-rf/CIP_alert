@@ -402,7 +402,8 @@ class ReplayService:
             data['plausibleRanges'] = PLAUSIBLE_RANGES
             return data
 
-    def alert_detail(self, alert_id: str) -> dict:
+    def alert_detail(self, alert_id: str, others_limit: int = 6) -> dict:
+        """Debug panel data for one alert; ``others_limit`` caps the list of the object's other alerts."""
         with self.lock:
             alert = self.monitor.alerts[alert_id]
             cycle = self.monitor.cycle_for(alert)
@@ -417,7 +418,7 @@ class ReplayService:
                 'otherAlerts': [{'id': a.id, 'phase': a.phase, 'cycleNumber': a.cycle_number,
                                  'raisedAt': a.raised_at, 'acknowledgedAt': a.acknowledged_at,
                                  'parameter': a.parameter, 'proposed': a.proposed}
-                                for a in others[:6]],
+                                for a in others[:others_limit]],
                 'otherAlertCount': len(others),
                 # audit trail of this alert (raised, notifications, acknowledgement), oldest first; matched on
                 # id *and* raised_at, so a reused id in live mode never shows another alert's history
@@ -685,7 +686,8 @@ def make_handler(service: ReplayService, web_dir: Path = WEB_DIR):
                                            f'Unknown period {period!r}; use one of: {", ".join(PERIODS)}')
                     return self._json(service.overview(period, query.get('line')))
                 if len(parts) == 3 and parts[:2] == ['api', 'alerts']:
-                    return self._json(service.alert_detail(parts[2]))
+                    others = 500 if query.get('others') == 'all' else 6
+                    return self._json(service.alert_detail(parts[2], others))
                 if parts == ['api', 'audit']:
                     return self._json(service.audit(_limit(query), query.get('alert') or None,
                                                     facets=query.get('facets') in ('1', 'true'), **_audit_filters(query)))

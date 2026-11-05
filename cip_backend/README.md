@@ -47,8 +47,8 @@ cip_backend/
 │   └── api.py          ReplayService (replay or live mode) and the JSON HTTP API
 ├── rules/proposed_tact_rules.json   Proposed rule definitions (status "proposed"; thresholds, rationale, projection)
 ├── docs/TACT_rules_proposal.md      The proposal for Danone's process and quality engineers (evidence, open questions)
-├── web/index.html      The page: overview (summary band, alert table, debug panel with audit trail, acknowledge
-│                       popover, run dialog), run history, audit log, system-status popover
+├── web/index.html      The page (v2, simplified): overview (summary cards, alert list, alert panel, run dialog),
+│                       run history, audit log
 ├── scripts/
 │   ├── serve.py           Starts the UI and the live replay
 │   ├── run_batch.py       Summary, CSV export and the debug view of one cycle
@@ -94,7 +94,7 @@ monitor.trend(alert_id, 'Return Temp')      # trend line for the debug panel
 
 ## Verified
 
-All 150 tests pass (about 7 min). `tests/ui/test_e2e.py` (87 tests) drives the real page in headless Chrome at 1180–1920 px wide: summary numbers against every line × period, selection and keyboard use, acknowledge with name and note, the alert's audit trail, the run history and audit log views (filters, CSV export, links back to the alert), the system-status popover, the run dialog, live updates, the loading, disconnected, replay-ended, live and stale states, and no clipped or overflowing text. It skips itself when Chrome or `websocket-client` is missing. The 8 tests in `test_parity.py` cover:
+All 96 tests pass (about 5 min). `tests/ui/test_e2e.py` (28 tests) drives the v2 page in headless Chrome at 1000–1920 px wide: summary numbers against every line × period, selection by mouse and keyboard, other alerts and notification links, one-click acknowledge (counts, audit log, reload, server restart), the run dialog, run history and audit log (filters, CSV), live updates, the loading, disconnected, replay-ended, live and stale states, and no clipped or overflowing text. It skips itself when Chrome or `websocket-client` is missing. The 8 tests in `test_parity.py` cover:
 
 - **Batch matches the notebook**: 38,943 records, 699 cycles (329 OK, 211 NO REFERENCE, 159 ALERT), 221 breaches (112 Caustic, 64 Pre Rinse, 28 Final Rinse, 17 Acid) and the same 18 warnings.
 - **Live matches batch**: replaying every reading gives the same 699 cycles (times, record counts, minutes per activity, median flows and status) and the same 221 alerts with the same final values.
@@ -105,7 +105,7 @@ All 150 tests pass (about 7 min). `tests/ui/test_e2e.py` (87 tests) drives the r
 |---|---|
 | `GET /api/status` | Replay state (`warming_up`, `live`, `finished`) and the clock |
 | `GET /api/overview?period=24h\|7d\|all&line=M11W01` | Summary band and one row per object with its alerts |
-| `GET /api/alerts/<id>` | Debug panel data: alert, TACT values, trends, cycle activity times, flows, data checks, earlier alerts, and `history` (this alert's audit trail, oldest first: raised, notifications, acknowledgement with who, when and note) |
+| `GET /api/alerts/<id>[?others=all]` | Debug panel data: alert, TACT values, trends, cycle activity times, flows, data checks, earlier alerts, and `history` (this alert's audit trail, oldest first: raised, notifications, acknowledgement with who, when and note) |
 | `POST /api/alerts/<id>/acknowledge` | Body `{"by": "name", "note": "optional"}`. `by` is required (1–64 characters; the page sends `operator`), `note` at most 280. Stored in the audit log; a repeat call returns the first acknowledgement |
 | `GET /api/audit?limit=100&alert=<id>&line=<line>&object=<id>&event=<a,b>&facets=1` | Audit log, newest first: `alert_raised` (first time an alert is seen), `acknowledged` (actor, note), `notification_sent` / `notification_failed`, `service_started`, `replay_restarted`. Wall-clock (UTC) and plant time. Every filter is optional; `event` is a comma list (400 for a malformed name); `facets=1` adds the lines, objects and event names present (for the page's filters). `total` counts the filtered entries |
 | `GET /api/audit.csv?<same filters>` | The audit log, or the filtered part, as CSV for quality teams, oldest first (UTF-8 with BOM for Excel; cells starting with `= + - @` are escaped). The page's **Export CSV** button links here with its current filters |
@@ -118,25 +118,19 @@ All 150 tests pass (about 7 min). `tests/ui/test_e2e.py` (87 tests) drives the r
 
 Alert IDs contain `:` and spaces, so URL-encode them.
 
-## Page changes from the mock-up
+## The page (v2)
 
-- **Unacknowledged instead of Critical** in the summary band, because no severity rule exists. Row dots are red when open and a grey ring once acknowledged.
-- **The plant selector picks the CIP line** (M01W01, M01W02, M11W01, M11W02). The period selector offers 24 hours, 7 days or all data.
-- **Proposed T/A/C rules** (`CIP_PROPOSED_RULES=show`, the default): Temperature, Action and Concentration tiles carry a dashed **Proposed** tag (tooltip "Proposed — pending Danone sign-off"), the line "Within limit …" / "Below limit …" and the proposed limit in orange on the trend line. With `alert`, proposed alerts appear in the table with a dashed outline in their parameter's column and a "Proposed rule" tag. See below.
-- **Links from notifications**: `/#alert=<id>` opens that alert in the panel, even when it is outside the selected period.
-- **Readings show the moment the alert was raised.** Time shows the activity's current or final minutes. Flow is in L/h and concentration is conductivity in mS/cm.
-- **The step bar has 6 steps.** A dashed step was not run in that cycle.
-- **"Check first" became "Data checks for this run".** It lists the cycle's data-quality issues, because the notebook has no guidance for what to check.
-- **Open run** opens a dialog with activity times against their thresholds and flow medians against the reference.
-- **Earlier alerts** on the same object appear as chips under the explanation.
-- **The Live indicator** reads "Catching up" during warm-up, "Replay ended" at the end of the data, and "Disconnected" in red if the API stops responding. In live mode (`CIP_MODE=live`) it never mentions the replay: "Waiting for readings…" until the first reading, then "Live · last reading 12 s ago" (counting every second), and "Stale · no reading for N min" in amber with a banner when no gateway has sent a reading for more than 3 minutes (`CIP_STALE_AFTER_SECONDS`). Filters and Acknowledge keep working while stale.
-- **Acknowledge asks who and why.** The button opens a small popover above it: the operator's name (asked once, then remembered in this browser and shown as "Acknowledging as … · Change") and an optional note (280 characters). Both go to the audit log. Escape or Cancel closes it; Ctrl/⌘+Enter in the note submits.
-- **Audit trail in the panel.** Under the data checks, each alert lists its history oldest first: raised by the monitor, Teams/email messages sent or failed, and who acknowledged it, when (plant time; the tooltip has the wall-clock time in the viewer's time zone) and the note. The action bar repeats "Acknowledged by … · time · note".
-- **Run history** (`/#runs`): closed runs for the selected line and period: a summary band (runs, with an alert, within time limits, not monitored), filters by object and status, and one row per run with its duration, six mini bars for the activity times (red = over its alert limit, dashed = not run), the alerts and their state. A row (click, Enter or Space) opens the run dialog with "Alerts in this run" and an **Open alert** link.
-- **Audit log** (`/#audit`): the append-only log, newest first, filtered by the line selector, object and event type (acknowledgements, alerts raised, notifications, service events), with **Export CSV** of exactly that selection. *Recorded* is the viewer's local time; *Plant time* is the monitor's clock. An alert link opens it in the overview, or explains that it was raised before the monitor last restarted.
-- **System status** (bell button, top right): data source, which notification channels are configured (Microsoft Teams, email, recipients, sent/failed counts; never a URL or password), whether data is kept in the database, and the proposed-rules mode. A green dot means notifications are active, amber means a channel failed. Read-only: these are server settings.
-- **Narrow laptops**: below 1500 px the *Soon* badges are dropped (the items stay greyed with a "Coming soon" tooltip); below 1366 px the unbuilt items are hidden.
-- **Restart notice.** After a server restart or a looped replay the page says that acknowledgements are kept (they come back with their alerts). It says they were reset only when the server could not open its database and runs in memory.
+v2 keeps the same backend, API and data, with a calmer page. v1's fuller page is in git under the `v1.0` tag.
+
+- **Overview**: three summary cards and one alert list. **Alerts** (with the acknowledged count beside it; the list header shows how many are open) is the default view. **Objects with alerts · N of 29** and **CIP runs in progress** filter the list: all objects including those without alerts, or only objects being cleaned now (click again, or *Show all alerts*, to clear). The panel keeps its alert while filtering. Each object with alerts is one row: its newest open alert, time against the limit, and "+N more". Rows group into *Needs attention* and *Acknowledged*; objects without alerts collapse into one "✓ N objects without alerts" line that expands.
+- **Alert panel**, visual rather than wordy: the actual minutes with a "+N min over" chip and a bar (blue up to the limit, red beyond) with the limit and the time it was crossed (the full sentence is in the tooltip and for screen readers); the 6 CIP steps with their minutes (red = over its limit, striped = running, dashed = not run); the temperature, flow and conductivity used in that step as gauges with a set-point tick (an amber "Invalid" chip when outside the plausible sensor range; parameters not used in the step are left out); data checks as chips (e.g. "Supply flow · 43 invalid"); and the object's other alerts: the latest 4, with **+N earlier** to load the full list (`GET /api/alerts/<id>?others=all`) and *Show fewer* to collapse it. **Open run** shows each step against its limit and the flow medians against the reference.
+- **Acknowledge is one click.** It is recorded in the audit log as "Operator". The API still accepts a name and a note (`POST /api/alerts/<id>/acknowledge`).
+- **Run history** (`/#runs`) and **Audit log** (`/#audit`, filters by object and event, **Export CSV** of that selection) follow the line and period selectors.
+- **Not shown on the page for now** (still in the backend and API): the proposed T/A/C limits (`/api/proposed-rules`, `CIP_PROPOSED_RULES`), the per-alert audit trail (`GET /api/alerts/<id>` → `history`) and the notification status (`/api/status` → `notifications`).
+- **Data-driven deviations from the mock-up** stay as before: open/acknowledged instead of *Critical*, because no severity rule exists; only Time raises alerts; flow in L/h and conductivity in mS/cm; 6 CIP steps; the line selector picks the CIP line within the Ambala plant.
+- **Status indicator**: "Catching up" during warm-up, "Live · date time" while replaying, "Replay ended" at the end of the data, "Disconnected" in red with a banner if the API stops responding. In live mode: "Waiting for readings…", "Live · last reading N s ago", and "No data for N min" in amber with a banner when no reading arrived for longer than `CIP_STALE_AFTER_SECONDS`.
+- **Links from notifications**: `/#alert=<id>` opens that alert, even when it is outside the selected period.
+- **Screen sizes**: 1280–1920 px side by side; below 1180 px the panel moves under the list.
 
 ## How the live monitor works
 
