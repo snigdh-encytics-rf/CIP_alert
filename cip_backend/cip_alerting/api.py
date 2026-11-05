@@ -498,6 +498,92 @@ class ReplayService:
                 del run['summary']
         return json_safe({'runs': runs, 'persistent': self.store.persistent, 'period': period or 'all'})
 
+    def lines(self, period: str = '24h', days: int = 14) -> dict:
+        """Manager view: per CIP line, how many objects were cleaned, planned vs actual CIP time, runs within
+        their limits, runs in progress and alerts, for ``period`` (24h, 7d, all, counted back from the monitor
+        clock), plus a daily history of the last ``days`` days.
+
+        Planned time is the sum of the reference thresholds of the timed activities (pre-rinse, caustic, acid,
+        final rinse) a run actually went through; actual time is the minutes those same activities took. Runs
+        without reference thresholds count as runs but not towards time or "within limits"."""
+        with self.lock:
+            clock = self.monitor.clock
+            window = PERIODS.get(period, PERIODS['24h'])
+            since = clock - window if window is not None and clock is not None else None
+            known = self.known_objects
+            keys = set(known) | set(self.monitor.objects)
+            names = sorted({key[0] for key in keys})
+            cycles = [c for c in self.monitor.closed_cycles if clock is None or c['Cycle End'] <= clock]
+            alerts = [a for a in self.monitor.alerts.values() if not a.proposed]
+            running: dict[str, list[dict]] = {name: [] for name in names}
+            for (line, obj_id), obj in self.monitor.objects.items():
+                if obj.current is not None and clock is not None and clock - obj.current.last_seen <= self.monitor.gap:
+                    code, _ = split_object(obj_id)
+                    activity = obj.current.activity_order[-1] if obj.current.activity_order else None
+                    running[line].append({'objectId': obj_id, 'code': code, 'activity': activity,
+                                          'startedAt': obj.current.start})
+
+        def timed(row) -> tuple[float, float] | None:
+            planned = actual = 0.0
+            counted = False
+            for activity in DURATION_THRESHOLDS:
+                minutes, threshold = row.get(activity), row.get(f'{activity} Threshold (min)')
+                if minutes is None or threshold is None or pd.isna(minutes) or pd.isna(threshold):
+                    continue
+                planned, actual, counted = planned + float(threshold), actual + float(minutes), True
+            return (planned, actual) if counted else None
+
+        def tally(runs: list[dict], line_alerts: list[Alert]) -> dict:
+            monitored = [r for r in runs if r['Status'] != 'NO REFERENCE']
+            times = [t for t in (timed(r) for r in monitored) if t is not None]
+            return {'runs': len(runs), 'monitoredRuns': len(monitored),
+                    'withinLimits': sum(r['Status'] == 'OK' for r in monitored),
+                    'overLimit': sum(r['Status'] == 'ALERT' for r in monitored),
+                    'plannedMinutes': round(sum(t[0] for t in times), 1),
+                    'actualMinutes': round(sum(t[1] for t in times), 1),
+                    'alerts': len(line_alerts),
+                    'unacknowledgedAlerts': sum(a.acknowledged_at is None for a in line_alerts)}
+
+        in_window = [c for c in cycles if since is None or c['Cycle End'] > since]
+        lines_out = []
+        for name in names:
+            line_objects = sorted(obj for line, obj in keys if line == name)
+            runs = [c for c in in_window if c['Line'] == name]
+            line_alerts = [a for a in alerts if a.line == name and (since is None or a.raised_at > since)]
+            stats = tally(runs, line_alerts)
+            stats.update({
+                'line': name, 'objects': len(line_objects),
+                'monitoredObjects': sum(known.get((name, obj), False) for obj in line_objects),
+                'objectsCleaned': len({r['Object'] for r in runs}),
+                'running': sorted(running[name], key=lambda r: r['code']),
+                'lastRunEnd': max((c['Cycle End'] for c in cycles if c['Line'] == name), default=None)})
+            lines_out.append(stats)
+        plant = tally(in_window, [a for a in alerts if since is None or a.raised_at > since])
+        plant.update({'objects': sum(l['objects'] for l in lines_out),
+                      'monitoredObjects': sum(l['monitoredObjects'] for l in lines_out),
+                      'objectsCleaned': sum(l['objectsCleaned'] for l in lines_out),
+                      'running': sum(len(l['running']) for l in lines_out)})
+
+        history = {'days': [], 'lines': {}}
+        if clock is not None:
+            last = clock.normalize()
+            first = last - pd.Timedelta(days=max(1, days) - 1)
+            if self.data_start is not None:
+                first = max(first, self.data_start.normalize())
+            day_list = list(pd.date_range(first, last, freq='D'))
+            history['days'] = [d.strftime('%Y-%m-%d') for d in day_list]
+            for name in names:
+                series = {key: [] for key in ('runs', 'withinLimits', 'overLimit', 'plannedMinutes', 'actualMinutes', 'alerts')}
+                for day in day_list:
+                    end = day + pd.Timedelta(days=1)
+                    stats = tally([c for c in cycles if c['Line'] == name and day <= c['Cycle End'] < end],
+                                  [a for a in alerts if a.line == name and day <= a.raised_at < end])
+                    for key in series:
+                        series[key].append(stats[key])
+                history['lines'][name] = series
+        return json_safe({'clock': clock, 'period': period if period in PERIODS else '24h', 'plant': plant,
+                          'lines': lines_out, 'history': history, 'status': self.status()})
+
     # ------------------------------------------------------------ helpers
     @staticmethod
     def _trends(cycle: CycleState, phase: str, rule_set: RuleSet | None = None) -> dict:
@@ -679,6 +765,16 @@ def make_handler(service: ReplayService, web_dir: Path = WEB_DIR):
                 if parts == ['api', 'status']:
                     with service.lock:
                         return self._json(service.status())
+                if parts == ['api', 'lines']:
+                    period = query.get('period', '24h')
+                    if period not in PERIODS:
+                        return self._error(HTTPStatus.BAD_REQUEST,
+                                           f'Unknown period {period!r}; use one of: {", ".join(PERIODS)}')
+                    try:
+                        days = min(60, max(1, int(query.get('days', 14))))
+                    except ValueError:
+                        return self._error(HTTPStatus.BAD_REQUEST, 'days must be a whole number')
+                    return self._json(service.lines(period, days))
                 if parts == ['api', 'overview']:
                     period = query.get('period', '24h')
                     if period not in PERIODS:

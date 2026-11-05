@@ -137,9 +137,9 @@ def browser():
 
 
 # ---------------------------------------------------------------- page helpers
-def open_page(b: Browser, server: Server, hash_: str = ''):
+def open_page(b: Browser, server: Server, hash_: str = '#alerts'):
     b.goto(server.base + '/' + hash_)
-    if hash_:
+    if hash_ != '#alerts':
         b.wait_for("state.overview", 30)
         return
     b.wait_for("state.overview && document.querySelector('#list .row, #list .empty')", 30)
@@ -394,9 +394,9 @@ def test_loading_skeleton_before_first_data(browser, ended):
                  "const __f = window.fetch; window.fetch = (...a) => new Promise(r => setTimeout(() => r(__f(...a)), 1500));")
     browser.goto(ended.base + '/')
     time.sleep(0.4)
-    assert browser.eval("document.querySelectorAll('#stats .skel').length") > 0
+    assert browser.eval("document.querySelectorAll('#kpis .skel').length") > 0
     assert browser.eval("document.getElementById('live').textContent") == 'Connecting…'
-    browser.wait_for("document.querySelector('#list .row')", 20)
+    browser.wait_for("document.querySelector('#lineCards .lcard')", 20)
 
 
 def test_replay_ended_state(browser, ended):
@@ -466,7 +466,7 @@ def test_live_mode_indicator_and_stale_banner():
     server = Server('--mode', 'live').start('waiting')
     try:
         with Browser(1600, 900) as b:
-            b.goto(server.base + '/')
+            b.goto(server.base + '/#alerts')
             b.wait_for("document.getElementById('live').textContent === 'Waiting for readings…'", 15)
             assert _push(server, _readings(0, 40))['accepted'] == 40   # caustic runs 39 min: over its limit
             b.wait_for("document.getElementById('live').textContent.startsWith('Live · last reading')", 10)
@@ -516,7 +516,7 @@ def test_notification_link_opens_that_alert(browser, ended):
     browser.wait_for(f"state.detail && state.detail.alert.id === {json.dumps(target)}", 15)
     wait_for_poll(browser, 2)
     assert browser.eval('state.selectedId') == target, 'stays on the linked alert even outside the period'
-    assert browser.eval('location.hash') == ''
+    assert browser.eval('location.hash') == '#alerts'
 
 
 def test_earlier_alerts_expand_to_the_full_list_and_collapse(browser, ended):
@@ -581,3 +581,72 @@ def test_summary_cards_filter_the_list(browser, ended):
     assert len(rows(browser)) == len(with_alerts)
     # the cards are native buttons, so Tab, Enter and Space work and screen readers announce the pressed state
     assert browser.eval("[...document.querySelectorAll('#stats [data-filter]')].every(b => b.tagName === 'BUTTON' && b.hasAttribute('aria-pressed'))")
+
+
+
+# ================================================================ lines (manager view)
+def test_lines_api_adds_up(ended):
+    d = ended.get('/api/lines?period=all&days=14')
+    p, lines = d['plant'], d['lines']
+    assert [l['line'] for l in lines] == ended.get('/api/overview')['lines']
+    for key in ('runs', 'monitoredRuns', 'withinLimits', 'overLimit', 'alerts', 'unacknowledgedAlerts', 'objects', 'objectsCleaned'):
+        assert p[key] == sum(l[key] for l in lines), key
+    assert p['plannedMinutes'] == pytest.approx(sum(l['plannedMinutes'] for l in lines), abs=0.5)
+    assert p['running'] == sum(len(l['running']) for l in lines)
+    for l in [p, *lines]:
+        assert l['withinLimits'] + l['overLimit'] == l['monitoredRuns'] <= l['runs']
+    assert p['alerts'] == sum(len(o['alerts']) for o in ended.get('/api/overview?period=all')['objects'])
+    days = d['history']['days']
+    assert 1 <= len(days) <= 14 and days == sorted(days)
+    for name, series in d['history']['lines'].items():
+        assert all(len(v) == len(days) for v in series.values())
+        assert sum(series['runs']) <= next(l for l in lines if l['line'] == name)['runs']
+    with pytest.raises(urllib.error.HTTPError) as err:
+        ended.get('/api/lines?period=bogus')
+    assert err.value.code == 400
+    with pytest.raises(urllib.error.HTTPError) as err:
+        ended.get('/api/lines?days=abc')
+    assert err.value.code == 400
+
+
+def test_lines_page_kpis_cards_and_charts(browser, ended):
+    browser.goto(ended.base + '/')
+    browser.wait_for("state.lines && document.querySelectorAll('#lineCards .lcard').length > 0", 20)
+    assert browser.eval("state.view") == 'lines'
+    assert browser.eval("document.querySelector('nav a[aria-current=page]').dataset.view") == 'lines'
+    L = browser.eval('state.lines')
+    assert browser.eval("document.querySelectorAll('#kpis .kpi').length") == 5
+    assert browser.eval("document.querySelectorAll('#lineCards .lcard').length") == len(L['lines'])
+    p = L['plant']
+    assert browser.eval("document.querySelectorAll('#kpis .hero, #stats .hero').length") == 0, 'no odd-one-out coloured tile'
+    hero = browser.eval("document.querySelector('#kpis .kpi .v').textContent")
+    assert hero == (f"{round(p['withinLimits'] / p['monitoredRuns'] * 100)}%" if p['monitoredRuns'] else '–')
+    n = len(L['history']['days'])
+    for chart in ('ch1', 'ch2'):
+        assert browser.eval(f"document.querySelectorAll('#{chart} rect.hit').length") == n
+    assert browser.eval("document.querySelectorAll('#ch3 rect.cell').length") == n * len(L['history']['lines'])
+    assert browser.eval("document.getElementById('line').hidden"), 'the Lines page always shows every line'
+    assert browser.eval("document.documentElement.scrollWidth <= document.documentElement.clientWidth")
+    browser.eval("document.getElementById('ch1').scrollIntoView()")
+    box = browser.eval("(() => { const r = document.querySelectorAll('#ch1 rect.hit')[0].getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; })()")
+    browser.send('Input.dispatchMouseEvent', type='mouseMoved', x=box[0], y=box[1])
+    browser.wait_for("!document.querySelector('#ch1 .tip').hidden", 5)
+    assert 'within limits' in browser.eval("document.querySelector('#ch1 .tip').textContent")
+    assert browser.errors == []
+
+
+def test_inspect_alerts_drills_into_that_line(browser, ended):
+    browser.goto(ended.base + '/')
+    browser.wait_for("document.querySelector('#lineCards .go')", 20)
+    line = browser.eval("document.querySelector('#lineCards .go').dataset.line")
+    browser.click('#lineCards .go')
+    browser.wait_for(f"state.view === 'overview' && state.overview && state.overview.objects.every(o => o.line === {json.dumps(line)})", 15)
+    assert browser.eval('location.hash') == '#alerts'
+    assert browser.eval("document.getElementById('line').value") == line
+    assert browser.eval("document.getElementById('scope').textContent").startswith(f'Ambala plant · line {line}')
+    assert not browser.eval("document.getElementById('line').hidden"), 'the line selector is back on the Alerts page'
+    browser.click('nav a[data-view="lines"]')
+    browser.wait_for(f"state.view === 'lines' && document.querySelectorAll('#lineCards .lcard').length === state.lines.lines.length", 15)
+    assert browser.eval("document.getElementById('lscope').textContent").startswith('Ambala plant · 4 lines'), 'Lines always shows all lines'
+    browser.click('nav a[data-view="overview"]')
+    browser.wait_for(f"state.view === 'overview' && state.overview.objects.every(o => o.line === {json.dumps(line)})", 15)

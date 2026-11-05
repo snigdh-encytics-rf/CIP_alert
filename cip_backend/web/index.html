@@ -69,14 +69,9 @@ h1{font-size:26px;line-height:1.2;margin:0;font-weight:700;letter-spacing:-.01em
 .stat.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--blue)}
 .stat{position:relative}
 .stat .x2{position:absolute;top:10px;right:12px;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:var(--blue-50);color:var(--blue)}
-.stat.hero .x2{background:rgba(255,255,255,.2);color:#fff}
 .stat .k{color:var(--muted);font-size:13px;font-weight:500}
 .stat .v{font-size:28px;font-weight:600;letter-spacing:-.02em;margin-top:4px;line-height:1.15}
 .stat .v small{font-size:14px;color:var(--subtle);font-weight:500;margin-left:4px}
-.stat.hero{background:linear-gradient(135deg,var(--blue) 0%,#0A4FA3 100%);border-color:transparent;color:#fff}
-.stat.hero .k{color:rgba(255,255,255,.88)}
-.stat.hero .v small{color:rgba(255,255,255,.8)}
-.stat.calm.hero{background:linear-gradient(135deg,#2F7A0B 0%,#3F8A10 100%)}
 
 /* ---------- alert list ---------- */
 .list{overflow:hidden}
@@ -228,14 +223,69 @@ dialog::backdrop{background:rgba(14,27,51,.32)}
 .dbody{padding:10px 24px 24px}
 .dbody table td,.dbody table th{padding:10px 12px}
 
+/* ---------- lines (manager view) ---------- */
+.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;margin-bottom:20px}
+.kpi{padding:18px 20px}
+.kpi .k{color:var(--muted);font-size:13px;font-weight:500}
+.kpi .v{font-size:34px;font-weight:700;letter-spacing:-.02em;line-height:1.1;margin-top:6px}
+.kpi .v small{font-size:15px;color:var(--muted);font-weight:500;margin-left:4px}
+.kpi .s{margin-top:6px;color:var(--muted);font-size:13px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.kpi .v.red{color:var(--red)}
+.lgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-bottom:20px}
+@media (min-width:1500px){.lgrid.n4{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media (max-width:860px){.lgrid{grid-template-columns:minmax(0,1fr)}}
+.lcard{padding:20px 22px;display:flex;flex-direction:column;gap:16px;cursor:pointer;transition:border-color .12s,transform .12s}
+.lcard:hover{border-color:var(--grey-200);transform:translateY(-1px)}
+.lhd{display:flex;align-items:flex-start;gap:10px}
+.lhd .ttl{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lhd .sw{width:12px;height:12px;border-radius:4px;flex:none}
+.lhd h2{margin:0;font-size:18px;font-weight:700;color:var(--navy);white-space:nowrap}
+.lhd .meta{color:var(--muted);font-size:13px}
+.lhd .run{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--green);background:var(--green-50);padding:4px 10px;border-radius:100px;white-space:nowrap}
+.lhd .run i{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+.lhd .run.idle{color:var(--muted);background:var(--grey-50)}.lhd .run.idle i{background:var(--subtle);animation:none}
+.meter .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.meter .top span{color:var(--muted);font-weight:500}
+.meter .top b{font-size:16px;font-weight:700;white-space:nowrap}
+.meter .top b small{font-size:13px;color:var(--muted);font-weight:500;margin-left:4px}
+.mt{position:relative;height:10px;border-radius:10px;background:#DCE3EA;margin-top:8px}
+.mt i{position:absolute;left:0;top:0;bottom:0;border-radius:10px;background:var(--blue)}
+.mt i.red{background:var(--red)}
+.mt em{position:absolute;top:-5px;bottom:-5px;width:3px;border-radius:2px;background:var(--text);box-shadow:0 0 0 2px #fff}
+.meter .cap{margin-top:8px;font-size:12.5px;color:var(--muted);display:flex;justify-content:flex-end;gap:8px}
+.lft{display:flex;align-items:center;gap:12px;padding-top:14px;border-top:1px solid var(--line-2);margin-top:auto}
+.lft .al{font-weight:600;white-space:nowrap}.lft .al b{color:var(--red);font-size:16px}
+.lft .al.zero b{color:var(--green)}
+.lft .go{margin-left:auto;border:0;background:var(--blue);color:#fff;font-weight:600;border-radius:100px;padding:9px 16px;cursor:pointer;white-space:nowrap}
+.lft .go:hover{background:var(--blue-600)}
+.lcard.na{cursor:default}.lcard.na:hover{transform:none;border-color:var(--line)}
+.charts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.chart{padding:18px 20px 12px;position:relative;min-width:0}
+.chart.wide{grid-column:1/-1}
+.chart h3{margin:0;font-size:15px;font-weight:600}
+.chart .csub{color:var(--muted);font-size:12.5px;margin-top:2px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:10px;font-size:12.5px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:3px}
+.legend i.ln{height:3px;width:14px;border-radius:2px}
+.plot{margin-top:6px;position:relative}
+.plot svg{display:block;width:100%;overflow:visible}
+.plot svg text{font:11.5px var(--font);fill:var(--muted)}
+.plot svg text.dl{font-weight:600;fill:var(--text)}
+.tip{position:absolute;pointer-events:none;background:#0B1730;color:#fff;border-radius:8px;padding:8px 10px;font-size:12.5px;line-height:1.5;white-space:nowrap;box-shadow:0 8px 24px rgba(11,23,48,.25);z-index:5;transform:translate(-50%,-100%)}
+.tip b{font-weight:600}
+.tip .sw{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px}
+
 @media (max-width:1180px){
+  .kpis{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .charts{grid-template-columns:minmax(0,1fr)}
   .grid{grid-template-columns:minmax(0,1fr)}
   .panel{position:static;max-height:none}
   header{gap:10px 16px;padding:10px 20px;height:auto;flex-wrap:wrap} main{padding:20px}
   .banner{margin:12px 20px 0}
 }
 @media (max-width:760px){
-  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stats,.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
   nav{display:none}
   .row{grid-template-columns:12px minmax(0,1fr) 96px}
   .row .what,.row .when{display:none}
@@ -246,7 +296,8 @@ dialog::backdrop{background:rgba(14,27,51,.32)}
 <header>
   <div class="brand"><b>DANONE</b><span>CIP Monitor</span></div>
   <nav aria-label="Main">
-    <a href="#" data-view="overview" aria-current="page">Overview</a>
+    <a href="#" data-view="lines" aria-current="page">Lines</a>
+    <a href="#alerts" data-view="overview">Alerts</a>
     <a href="#runs" data-view="runs">Run history</a>
     <a href="#audit" data-view="audit">Audit log</a>
   </nav>
@@ -265,11 +316,29 @@ dialog::backdrop{background:rgba(14,27,51,.32)}
 <div class="banner" id="banner" hidden></div>
 
 <main>
-  <!-- Overview -->
-  <section class="view" id="view-overview">
+  <!-- Lines: manager view -->
+  <section class="view" id="view-lines">
+    <div class="head"><div><h1>CIP lines</h1><div class="sub" id="lscope">Ambala plant · all lines · last 24 hours</div></div></div>
+    <div class="kpis" id="kpis">
+      <div class="card kpi"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:34px;width:40%;margin-top:10px"></div></div>
+      <div class="card kpi"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:34px;width:40%;margin-top:10px"></div></div>
+      <div class="card kpi"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:34px;width:40%;margin-top:10px"></div></div>
+      <div class="card kpi"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:34px;width:40%;margin-top:10px"></div></div>
+      <div class="card kpi"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:34px;width:40%;margin-top:10px"></div></div>
+    </div>
+    <div class="lgrid" id="lineCards"></div>
+    <div class="charts">
+      <div class="card chart"><h3>CIP runs per day</h3><div class="csub">Completed runs per day, within or over their time limits · last 14 days</div><div class="legend" id="lg1"></div><div class="plot" id="ch1"></div></div>
+      <div class="card chart"><h3>CIP time per day</h3><div class="csub">Hours taken per day; the dark mark is the planned (reference) time · last 14 days</div><div class="legend" id="lg2"></div><div class="plot" id="ch2"></div></div>
+      <div class="card chart wide"><h3>Runs within limits, by line and day</h3><div class="csub">Share of each day's completed runs that stayed within their time limits · darker is better · last 14 days</div><div class="legend" id="lg3"></div><div class="plot" id="ch3"></div></div>
+    </div>
+  </section>
+
+  <!-- Alerts (drill-down) -->
+  <section class="view" id="view-overview" hidden>
     <div class="grid">
       <div>
-        <div class="head"><div><h1>Overview</h1><div class="sub" id="scope">Ambala plant · all lines · last 24 hours</div></div></div>
+        <div class="head"><div><h1>Alerts</h1><div class="sub" id="scope">Ambala plant · all lines · last 24 hours</div></div></div>
         <div class="stats" id="stats">
           <div class="card stat"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:28px;width:40%;margin-top:10px"></div></div>
           <div class="card stat"><div class="skel" style="height:14px;width:60%"></div><div class="skel" style="height:28px;width:40%;margin-top:10px"></div></div>
@@ -323,7 +392,7 @@ const LABELS = {'Pre Rinse':'Pre-rinse','Caustic':'Caustic wash','Mid Rinse':'Mi
 const PERIOD_TEXT = {'24h':'last 24 hours','7d':'last 7 days','all':'all data'};
 const EVENTS = {alert_raised:'Alert raised', acknowledged:'Acknowledged', notification_sent:'Notification sent',
   notification_failed:'Notification failed', replay_restarted:'Replay restarted', service_started:'Service started'};
-const state = window.state = {view:'overview', period:'24h', line:'', selectedId:null, overview:null, detail:null,
+const state = window.state = {view:'lines', lines:null, period:'24h', line:'', selectedId:null, overview:null, detail:null,
   connected:true, everConnected:false, picked:false, othersAll:false, filter:'all', showQuiet:false, acking:false, runs:null, audit:null};
 
 // ---------- helpers ----------
@@ -367,6 +436,12 @@ async function refresh(){
     const ov = await api(`/api/overview?${q}`);
     if (g !== gen) return;
     state.overview = ov; state.connected = true; state.everConnected = true;
+    if (state.view === 'lines'){
+      const lq = new URLSearchParams({period: state.period, days: 14});
+      const ln = await api(`/api/lines?${lq}`);
+      if (g !== gen) return;
+      state.lines = ln;
+    }
     pickSelection();
     if (state.selectedId){
       try { state.detail = await api(detailUrl(state.selectedId)); }
@@ -400,6 +475,7 @@ function select(id){
 window.render = function render(){
   renderHeader();
   if (state.view === 'overview'){ renderStats(); renderList(); renderPanel(); }
+  if (state.view === 'lines') renderLines();
 };
 function renderHeader(){
   const live = $('live'), st = state.overview?.status, b = $('banner');
@@ -442,7 +518,7 @@ function renderStats(){
       <div class="k">${k}</div><div class="v num">${v}</div>${on && f !== 'all' ? '<span class="x2" aria-hidden="true">✕</span>' : ''}</button>`;
   };
   const acked = s.openAlerts - s.unacknowledgedAlerts;
-  const html = card('all', `hero ${s.openAlerts === 0 ? 'calm' : ''}`, `Alerts · ${PERIOD_TEXT[state.period]}`,
+  const html = card('all', '', `Alerts · ${PERIOD_TEXT[state.period]}`,
       `${s.openAlerts}${acked > 0 ? `<small>${acked} acknowledged</small>` : ''}`, 'Show every alert, open and acknowledged')
     + card('objects', '', 'Objects with alerts', `${s.objectsWithAlerts}<small>of ${s.objectsTotal}</small>`, `Show all ${s.objectsTotal} objects, with and without alerts`)
     + card('running', '', 'CIP runs in progress', s.runsInProgress, 'Show objects with a CIP run in progress');
@@ -590,6 +666,178 @@ function renderPanel(){
   $('runBtn').disabled = !c.activities;
 }
 
+// ---------- lines (manager view) ----------
+const hours = m => m == null ? '–' : (m / 60 >= 100 ? Math.round(m / 60).toLocaleString('en-GB') : (m / 60).toFixed(1));
+const pct = (a, b) => b ? Math.round(a / b * 100) : null;
+function delta(actual, planned){
+  if (!planned) return '';
+  const d = (actual - planned) / planned * 100, r = Math.round(d);
+  return `<span class="chip ${r > 0 ? 'red' : 'green'} num">${r > 0 ? '+' : r < 0 ? '−' : '±'}${Math.abs(r)}% vs plan</span>`;
+}
+function meter(label, value, cap, fill, marker, red){
+  return `<div class="meter"><div class="top"><span>${label}</span><b class="num">${value}</b></div>
+    <div class="mt" aria-hidden="true"><i class="${red ? 'red' : ''}" style="width:${Math.max(0, Math.min(100, fill))}%"></i>${marker != null ? `<em style="left:calc(${Math.min(100, marker)}% - 1px)"></em>` : ''}</div>
+    ${cap ? `<div class="cap num">${cap}</div>` : ''}</div>`;
+}
+function renderLines(){
+  const L = state.lines; if (!L) return;
+  const T = L.plant, per = PERIOD_TEXT[state.period];
+  $('lscope').textContent = `Ambala plant · ${L.lines.length} lines · ${per}`;
+  const within = pct(T.withinLimits, T.monitoredRuns);
+  setHTML($('kpis'), `
+    <div class="card kpi"><div class="k">Runs within limits</div><div class="v num">${within == null ? '–' : within + '%'}</div><div class="s num">${T.withinLimits} of ${T.monitoredRuns} runs</div></div>
+    <div class="card kpi"><div class="k">CIP time taken</div><div class="v num">${hours(T.actualMinutes)}<small>h</small></div><div class="s num">planned ${hours(T.plannedMinutes)} h ${delta(T.actualMinutes, T.plannedMinutes)}</div></div>
+    <div class="card kpi"><div class="k">Objects cleaned</div><div class="v num">${T.objectsCleaned}<small>of ${T.objects}</small></div><div class="s">at least one completed run</div></div>
+    <div class="card kpi"><div class="k">Running now</div><div class="v num">${T.running}</div><div class="s">CIP runs in progress</div></div>
+    <div class="card kpi"><div class="k">Open alerts</div><div class="v num ${T.unacknowledgedAlerts ? 'red' : ''}">${T.unacknowledgedAlerts}</div><div class="s num">${T.alerts} raised · ${per}</div></div>`);
+  $('lineCards').className = `lgrid n${L.lines.length}`;
+  setHTML($('lineCards'), L.lines.map(l => {
+    const run = l.running.length ? `<span class="run" title="${esc(l.running.map(r => `${r.code} · ${label(r.activity)}`).join(', '))}"><i></i>${l.running.length} running</span>`
+                                  : `<span class="run idle"><i></i>Idle</span>`;
+    const objs = `${l.objects} object${l.objects === 1 ? '' : 's'}${l.runs ? ` · ${l.objectsCleaned === l.objects ? 'all' : l.objectsCleaned} cleaned` : ''}`;
+    if (!l.monitoredObjects) return `<div class="card lcard na"><div class="lhd"><div class="ttl"><h2>Line ${esc(l.line)}</h2><span class="meta">${objs}</span></div>${run}</div>
+      <div style="color:var(--muted)">Not monitored: no reference times for this line's objects.</div></div>`;
+    const w = pct(l.withinLimits, l.monitoredRuns), over = l.actualMinutes > l.plannedMinutes;
+    const scale = Math.max(l.actualMinutes, l.plannedMinutes) * 1.08 || 1;
+    const body = l.runs ? `
+      ${meter('Runs within limits', `${w}%<small>${l.withinLimits} of ${l.monitoredRuns}</small>`, '', w, null, false)}
+      ${meter('CIP time', `${hours(l.actualMinutes)} h<small>of ${hours(l.plannedMinutes)} h planned</small>`, delta(l.actualMinutes, l.plannedMinutes), l.actualMinutes / scale * 100, l.plannedMinutes / scale * 100, over)}`
+      : `<div style="color:var(--muted)">No completed CIP runs in the ${per}.</div>`;
+    return `<div class="card lcard" data-line="${esc(l.line)}" data-key="line:${esc(l.line)}">
+      <div class="lhd"><div class="ttl"><h2>Line ${esc(l.line)}</h2><span class="meta">${objs}</span></div>${run}</div>
+      ${body}
+      <div class="lft"><span class="al ${l.unacknowledgedAlerts ? '' : 'zero'}"><b class="num">${l.unacknowledgedAlerts}</b> open alert${l.unacknowledgedAlerts === 1 ? '' : 's'}</span>
+        <button class="go" type="button" data-line="${esc(l.line)}" data-key="go:${esc(l.line)}">Inspect alerts →</button></div></div>`;
+  }).join(''));
+  renderCharts();
+}
+function inspectLine(line){
+  state.line = line; $('line').value = line;
+  state.selectedId = null; state.detail = null; state.picked = false; state.filter = 'all';
+  location.hash = '#alerts';
+}
+$('lineCards').addEventListener('click', e => {
+  const c = e.target.closest('[data-line]'); if (c && !c.closest('.na')) inspectLine(c.dataset.line);
+});
+
+// ---- charts (inline SVG; one y-axis each; hover tooltips) ----
+const NS = 'http://www.w3.org/2000/svg';
+const dayLabel = d => new Date(d + 'T00:00').toLocaleDateString('en-GB', {day: 'numeric', month: 'short'});
+const tipDay = (days, i) => `<b>${dayLabel(days[i])}</b>${i === days.length - 1 ? ' <span style="opacity:.7">· so far today</span>' : ''}`;
+function niceMax(v){ if (!(v > 0)) return 4; const raw = v / 4, p = 10 ** Math.floor(Math.log10(raw)), n = raw / p; return 4 * (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p; }
+function topRounded(x, y, w, h, r){
+  if (h <= 0) return '';
+  r = Math.min(r, w / 2, h);
+  return `M${x},${y + h}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + h}Z`;
+}
+function frame(el, days, yMax, fmtY, right = 16){
+  const W = Math.max(320, el.clientWidth || 600), H = 230, m = {l: 44, r: right, t: 12, b: 26};
+  const iw = W - m.l - m.r, ih = H - m.t - m.b, step = iw / days.length;
+  const y = v => m.t + ih - (v / yMax) * ih;
+  let g = '';
+  for (let i = 0; i <= 4; i++){
+    const v = yMax * i / 4, yy = y(v);
+    g += `<line x1="${m.l}" x2="${W - m.r}" y1="${yy}" y2="${yy}" stroke="${i ? '#E7ECF1' : '#C9D3DD'}" stroke-width="1"/>`;
+    g += `<text x="${m.l - 8}" y="${yy + 4}" text-anchor="end">${fmtY(v)}</text>`;
+  }
+  const every = Math.ceil(days.length / Math.max(2, Math.floor(iw / 64)));
+  days.forEach((d, i) => { if ((days.length - 1 - i) % every === 0) g += `<text x="${m.l + step * (i + .5)}" y="${H - 6}" text-anchor="middle">${dayLabel(d)}</text>`; });
+  return {W, H, m, iw, ih, step, y, g};
+}
+function mountChart(el, svg, f, tipFor){
+  const key = svg;
+  if (el.__svg === key) return;
+  el.__svg = key;
+  el.innerHTML = `<svg viewBox="0 0 ${f.W} ${f.H}" height="${f.H}" role="img">${svg}</svg><div class="tip" hidden></div>`;
+  const tip = el.querySelector('.tip'), s = el.querySelector('svg');
+  s.querySelectorAll('rect.hit').forEach(r => {
+    r.addEventListener('mouseenter', () => {
+      const i = +r.dataset.i; tip.innerHTML = tipFor(i); tip.hidden = false;
+      const x = f.m.l + f.step * (i + .5);
+      tip.style.left = `${Math.min(Math.max(x / f.W * el.clientWidth, 90), el.clientWidth - 90)}px`; tip.style.top = `${f.m.t + 4}px`;
+      s.querySelectorAll(`.hov`).forEach(h => h.setAttribute('opacity', h.dataset.i === String(i) ? '1' : '0'));
+    });
+    r.addEventListener('mouseleave', () => { tip.hidden = true; s.querySelectorAll('.hov').forEach(h => h.setAttribute('opacity', '0')); });
+  });
+}
+function hits(f){
+  return f.g + Array.from({length: Math.round(f.iw / f.step)}, (_, i) =>
+    `<rect class="hov" data-i="${i}" x="${f.m.l + f.step * i}" y="${f.m.t}" width="${f.step}" height="${f.ih}" fill="#0B1730" fill-opacity=".04" opacity="0"/>`).join('');
+}
+function hitRects(f, n){
+  return Array.from({length: n}, (_, i) => `<rect class="hit" data-i="${i}" x="${f.m.l + f.step * i}" y="${f.m.t}" width="${f.step}" height="${f.ih}" fill="transparent"/>`).join('');
+}
+const SEQ = ['#cde2fb', '#b7d3f6', '#9ec5f4', '#86b6ef', '#6da7ec', '#5598e7', '#3987e5', '#2a78d6', '#256abf', '#1c5cab', '#184f95', '#104281', '#0d366b'];
+const seq = v => SEQ[Math.min(SEQ.length - 1, Math.round(v / 100 * (SEQ.length - 1)))];
+function renderCharts(){
+  const L = state.lines, H = L.history, days = H.days;
+  if (!days.length) return;
+  const names = L.lines.map(l => l.line).filter(n => H.lines[n]);
+  const add = key => days.map((_, i) => names.reduce((s, n) => s + (H.lines[n][key][i] || 0), 0));
+  const within = add('withinLimits'), over = add('overLimit'), planned = add('plannedMinutes'), actual = add('actualMinutes');
+
+  // 1. runs per day: stacked within (blue) + over limit (red)
+  { const el = $('ch1'), f = frame(el, days, niceMax(Math.max(...within.map((w, i) => w + over[i]))), v => Math.round(v));
+    const bw = Math.min(28, f.step * .62); let b = hits(f);
+    days.forEach((_, i) => {
+      const x = f.m.l + f.step * (i + .5) - bw / 2, yw = f.y(within[i]), yo = f.y(within[i] + over[i]);
+      if (within[i]) b += `<path d="${topRounded(x, yw, bw, f.y(0) - yw, over[i] ? 0 : 4)}" fill="#005EB8"/>`;
+      if (over[i]) b += `<path d="${topRounded(x, yo, bw, Math.max(0, yw - yo - 2), 4)}" fill="#C8281C"/>`;
+    });
+    $('lg1').innerHTML = `<span><i style="background:#005EB8"></i>Within limits</span><span><i style="background:#C8281C"></i>Over limit</span>`;
+    mountChart(el, b + hitRects(f, days.length), f, i => `${tipDay(days, i)}<br><span class="sw" style="background:#005EB8"></span>${within[i]} within limits<br><span class="sw" style="background:#C8281C"></span>${over[i]} over limit`); }
+
+  // 2. CIP hours per day: one bar (hours taken) with a marker at the planned hours
+  { const el = $('ch2'), ph = planned.map(v => v / 60), ah = actual.map(v => v / 60);
+    const f = frame(el, days, niceMax(Math.max(...ph, ...ah)), v => `${Math.round(v)} h`);
+    const bw = Math.min(28, f.step * .62); let b = hits(f), marks = '';
+    days.forEach((_, i) => {
+      const x = f.m.l + f.step * (i + .5) - bw / 2;
+      b += `<path d="${topRounded(x, f.y(ah[i]), bw, f.y(0) - f.y(ah[i]), 4)}" fill="${ah[i] > ph[i] ? '#C8281C' : '#005EB8'}"/>`;
+      if (ph[i]) marks += `<line x1="${x - 4}" x2="${x + bw + 4}" y1="${f.y(ph[i])}" y2="${f.y(ph[i])}" stroke="#fff" stroke-width="6" stroke-linecap="round"/>`
+                       + `<line x1="${x - 4}" x2="${x + bw + 4}" y1="${f.y(ph[i])}" y2="${f.y(ph[i])}" stroke="#0B1730" stroke-width="2.5" stroke-linecap="round"/>`;
+    });
+    $('lg2').innerHTML = `<span><i style="background:#005EB8"></i>Taken, within plan</span><span><i style="background:#C8281C"></i>Taken, over plan</span><span><i class="ln" style="background:#0B1730"></i>Planned</span>`;
+    mountChart(el, b + marks + hitRects(f, days.length), f, i => `${tipDay(days, i)}<br>Taken <b>${ah[i].toFixed(1)} h</b><br>Planned ${ph[i].toFixed(1)} h${ph[i] ? `<br>${ah[i] >= ph[i] ? '+' : '−'}${Math.abs(Math.round((ah[i] - ph[i]) / ph[i] * 100))}% vs plan` : ''}`); }
+
+  // 3. heatmap: lines x days, shade = share of runs within limits, value printed in the cell
+  { const el = $('ch3'), W = Math.max(320, el.clientWidth || 600), left = 82, top = 4, ch = 36, gap = 3;
+    const cw = (W - left) / days.length, Hh = top + names.length * (ch + gap) + 24;
+    let g = '';
+    names.forEach((n, r) => {
+      const y = top + r * (ch + gap), S = H.lines[n];
+      g += `<text x="0" y="${y + ch / 2 + 4}" class="dl">${n}</text>`;
+      days.forEach((_, i) => {
+        const x = left + i * cw, runs = S.runs[i], v = runs ? Math.round(S.withinLimits[i] / runs * 100) : null;
+        const fill = v == null ? '#F1F4F7' : seq(v), dark = v != null && v >= 58;
+        g += `<rect x="${x + gap / 2}" y="${y}" width="${cw - gap}" height="${ch}" rx="5" fill="${fill}"/>`;
+        g += `<text x="${x + cw / 2}" y="${y + ch / 2 + 4}" text-anchor="middle" style="fill:${v == null ? '#8D99A8' : dark ? '#fff' : '#0B1730'};font-weight:600">${v == null ? '–' : cw > 34 ? v + '%' : v}</text>`;
+        g += `<rect class="cell" data-r="${r}" data-i="${i}" x="${x}" y="${y}" width="${cw}" height="${ch}" fill="transparent"/>`;
+      });
+    });
+    const every = Math.ceil(days.length / Math.max(2, Math.floor((W - left) / 64)));
+    days.forEach((d, i) => { if ((days.length - 1 - i) % every === 0) g += `<text x="${left + cw * (i + .5)}" y="${Hh - 6}" text-anchor="middle">${dayLabel(d)}</text>`; });
+    $('lg3').innerHTML = `<span>0%</span><span style="display:inline-block;width:140px;height:10px;border-radius:5px;background:linear-gradient(90deg,${SEQ.join(',')})"></span><span>100% within limits</span>
+      <span><i style="background:#F1F4F7;box-shadow:inset 0 0 0 1px #DCE3EA"></i>No completed runs</span>`;
+    if (el.__svg !== g){
+      el.__svg = g;
+      el.innerHTML = `<svg viewBox="0 0 ${W} ${Hh}" height="${Hh}" role="img" aria-label="Share of runs within limits per line and day">${g}</svg><div class="tip" hidden></div>`;
+      const tip = el.querySelector('.tip');
+      el.querySelectorAll('rect.cell').forEach(c => {
+        c.addEventListener('mouseenter', () => {
+          const n = names[+c.dataset.r], i = +c.dataset.i, S = H.lines[n];
+          tip.innerHTML = `${tipDay(days, i)}<br>Line <b>${n}</b><br>${S.runs[i] ? `${S.withinLimits[i]} of ${S.runs[i]} runs within limits` : 'No completed runs'}`;
+          tip.hidden = false;
+          tip.style.left = `${Math.min(Math.max((left + cw * (i + .5)) / W * el.clientWidth, 90), el.clientWidth - 90)}px`;
+          tip.style.top = `${(top + +c.dataset.r * (ch + gap)) / Hh * el.clientHeight}px`;
+        });
+        c.addEventListener('mouseleave', () => { tip.hidden = true; });
+      });
+    } }
+}
+let resizeT = null;
+window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (state.view === 'lines' && state.lines){ for (const id of ['ch1', 'ch2', 'ch3']) $(id).__svg = null; renderCharts(); } }, 150); });
+
 // ---------- run dialog ----------
 function runTable(activities, flows){
   const rows = (activities || []).filter(s => s.ran).map(s => `<tr><td>${esc(s.label || label(s.activity))}</td>
@@ -664,22 +912,26 @@ $('detail').addEventListener('click', e => {
 // ---------- filters & views ----------
 $('line').addEventListener('change', e => { state.line = e.target.value; state.selectedId = null; state.detail = null; state.picked = false; onFilters(); });
 $('period').addEventListener('change', e => { state.period = e.target.value; onFilters(); });
-function onFilters(){ if (state.view === 'overview') refresh(); else loadView(); }
+function onFilters(){ if (state.view === 'overview' || state.view === 'lines') refresh(); else loadView(); }
+const VIEWS = {'': 'lines', lines: 'lines', alerts: 'overview', runs: 'runs', audit: 'audit'};
 function showView(){
-  let v = (location.hash || '#').slice(1) || 'overview';
+  let v = (location.hash || '#').slice(1);
   if (v.startsWith('alert=')){            // link from a Teams/email notification
     const id = decodeURIComponent(v.slice(6));
-    history.replaceState(null, '', location.pathname);
-    v = 'overview';
-    if (id){ state.selectedId = id; state.detail = null; state.picked = true; refresh(); }
+    history.replaceState(null, '', location.pathname + '#alerts');
+    v = 'alerts';
+    if (id){ state.selectedId = id; state.detail = null; state.picked = true; }
   }
-  state.view = ['runs', 'audit'].includes(v) ? v : 'overview';
-  for (const s of ['overview', 'runs', 'audit']) $(`view-${s}`).hidden = s !== state.view;
+  const prev = state.view;
+  state.view = VIEWS[v] || 'lines';
+  for (const s of ['lines', 'overview', 'runs', 'audit']) $(`view-${s}`).hidden = s !== state.view;
   document.querySelectorAll('nav a').forEach(a => a.dataset.view === state.view
     ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
   $('period').hidden = state.view === 'audit';
+  $('line').hidden = state.view === 'lines';
   window.scrollTo(0, 0);
-  if (state.view === 'overview') window.render(); else loadView();
+  if (state.view === 'overview' || state.view === 'lines'){ window.render(); if (prev !== state.view || state.picked) refresh(); }
+  else loadView();
 }
 window.addEventListener('hashchange', () => { if ($('runDialog').open) $('runDialog').close(); showView(); });
 let viewTimer = null;
@@ -689,7 +941,7 @@ async function loadView(){
     if (state.view === 'runs') await loadRuns();
     if (state.view === 'audit') await loadAudit();
   } catch (e){ state.connected = false; renderHeader(); }
-  if (state.view !== 'overview') viewTimer = setTimeout(loadView, 10000);
+  if (state.view === 'runs' || state.view === 'audit') viewTimer = setTimeout(loadView, 10000);
 }
 async function loadRuns(){
   const q = new URLSearchParams({period: state.period, limit: 300}); if (state.line) q.set('line', state.line);
