@@ -1,0 +1,4 @@
+# Development / test dependencies (not installed in the Docker image).
+-r requirements.txt
+pytest>=7.0
+websocket-client>=1.6   # tests/ui/cdp.py (headless Chrome screenshots)

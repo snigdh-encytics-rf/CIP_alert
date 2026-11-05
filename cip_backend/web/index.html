@@ -1,0 +1,1854 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CIP Monitor · Overview</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23005EB8'/%3E%3Cpath d='M9 16.5l5 5 9-11' stroke='white' stroke-width='3' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* Brand, from danone.com */
+  --blue:#005EB8; --navy:#001689; --tint-blue:#CCDFF1; --control-grey:#E6EBEF; --green-tick:#54AD18;
+  /* Neutrals */
+  --ink:#000; --text-secondary:#5C5C5C; --text-muted:#666; --text-faint:#8A96A1; --row-divider:#EEF2F5; --white:#fff;
+  /* Derived */
+  --row-selected:#E9F1F9; --row-hover:#F7FAFC; --panel-bg:#F4F8FB; --button-secondary:#E1E8EE; --step-inactive:#D5DEE5;
+  --limit-line:#9FB0BE; --live-dot:#3F8A10;
+  /* Status */
+  --critical:#C8281C; --critical-bg:#FBE7E5; --warning-text:#A35408; --warning-bg:#FCF0DD; --warning-dot:#F0A030;
+  /* Layout (overridden per screen size below) */
+  --top-h:68px; --side:40px; --left-pad-top:32px; --left-pad-right:36px;
+  --panel-w:clamp(420px,28vw,600px); --panel-pad-x:36px; --panel-pad-top:30px;
+  --w-obj:164px; --w-t:104px; --w-a:108px; --w-c:122px; --w-time:96px; --w-r:68px;
+  --cell-x:10px; --read-size:24px;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0;background:var(--white);height:100%}
+body{color:var(--ink);font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:14px;line-height:1.45;
+  font-feature-settings:'cv11','ss03';-webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+.num{font-variant-numeric:tabular-nums}
+button,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.left,.detail,.view,dialog{scrollbar-width:thin;scrollbar-color:#C9D3DB transparent}
+
+/* ---------------- Top bar */
+.top{flex:none;height:var(--top-h);display:flex;align-items:center;gap:32px;padding:0 var(--side);border-bottom:1px solid var(--control-grey);background:var(--white)}
+.brand{color:var(--blue);font-weight:700;font-size:21px;letter-spacing:-.01em;display:flex;align-items:center;gap:12px;white-space:nowrap}
+.brand span{color:var(--blue);font-weight:800;letter-spacing:.01em}
+.brand em{font-style:normal;color:#000;font-weight:500;font-size:15px;padding-left:12px;border-left:1px solid #C9D3DB;letter-spacing:0;line-height:20px}
+.nav{display:flex;gap:4px;color:var(--text-secondary)}
+.nav a{padding:8px 15px;border-radius:100px;text-decoration:none;color:inherit;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+.nav a[aria-current]{background:var(--tint-blue);color:var(--navy);font-weight:600}
+.nav a[aria-disabled]{color:#97A3AE;cursor:not-allowed}
+.soon{font-size:10.5px;font-weight:600;letter-spacing:.02em;padding:1px 7px;border-radius:100px;background:var(--control-grey);color:#6B7782}
+.right{margin-left:auto;display:flex;align-items:center;gap:16px;color:var(--text-secondary);font-size:13px}
+.live{display:flex;align-items:center;gap:7px;white-space:nowrap}
+.live i{width:7px;height:7px;border-radius:50%;background:var(--live-dot);flex:none}
+.live.ok i{box-shadow:0 0 0 0 rgba(63,138,16,.5);animation:pulse 2s infinite}
+.live.idle i{background:var(--limit-line)}
+.live.down{color:var(--critical);font-weight:500} .live.down i{background:var(--critical)}
+.live.warn{color:var(--warning-text);font-weight:500} .live.warn i{background:var(--warning-dot)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(63,138,16,.45)}70%{box-shadow:0 0 0 6px rgba(63,138,16,0)}100%{box-shadow:0 0 0 0 rgba(63,138,16,0)}}
+.select{position:relative;display:flex;align-items:center}
+.select select{appearance:none;-webkit-appearance:none;border:0;background:var(--control-grey);border-radius:100px;padding:9px 34px 9px 15px;font-weight:500;color:#000;font-size:13px;cursor:pointer;min-height:38px}
+.select select{field-sizing:content}
+.select select:hover:not(:disabled){background:#DCE3E9}
+.select select:disabled{cursor:not-allowed;color:#6B7782;opacity:.75}
+.select svg{position:absolute;right:14px;width:10px;height:10px;pointer-events:none}
+
+/* ---------------- Connection banner and toast */
+.banner{flex:none;display:flex;align-items:center;gap:10px;padding:10px var(--side);background:var(--warning-bg);color:var(--warning-text);font-size:13px;font-weight:500;border-bottom:1px solid #F3DDB8}
+.banner svg{width:16px;height:16px;flex:none}
+body.stale .stats,body.stale .tbl tbody,body.stale .detail > :not(.btn){opacity:.55;filter:saturate(.4);transition:opacity .3s}
+body.stale .sk{animation:none}                        /* stalled, not loading */
+body.stale tr.alertrow,body.stale .chip,body.stale #latestBtn{cursor:not-allowed}
+.toast{position:fixed;left:calc((100vw - var(--panel-w)) / 2);top:calc(var(--top-h) + 14px);transform:translateX(-50%);z-index:20;background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,22,137,.25);font-size:13.5px;max-width:min(560px,90vw);display:flex;gap:14px;align-items:center}
+body.stale .toast,body.feedstale .toast{top:calc(var(--top-h) + 56px)}      /* below the banner, not over it */
+.toast button{border:0;background:rgba(255,255,255,.16);color:#fff;border-radius:100px;padding:5px 12px;cursor:pointer;font-size:12.5px;font-weight:600}
+
+/* ---------------- Layout */
+.page{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) var(--panel-w)}
+.left{padding:var(--left-pad-top) var(--left-pad-right) 32px var(--side);min-width:0;overflow:auto;position:relative}   /* contains the rows' .sr-only text, so it never scrolls the page */
+h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.022em;line-height:1.15}
+
+/* ---------------- Summary band */
+.stats{display:flex;margin-top:20px;margin-bottom:10px;padding:22px 8px;background:var(--blue);border-radius:16px;color:#fff;min-height:104px}
+.stat{flex:1;min-width:0;padding:0 24px;border-left:1px solid rgba(255,255,255,.28)}
+.stat:first-child{border-left:0}
+.stat .v{font-size:34px;font-weight:600;letter-spacing:-.025em;line-height:1.1;white-space:nowrap}
+.stat .v small{font-size:17px;color:rgba(255,255,255,.8);font-weight:400;letter-spacing:-.01em}
+.stat .k{margin-top:4px;color:rgba(255,255,255,.9);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.stats.skel .v{color:rgba(255,255,255,.55)}
+/* a line with no reference thresholds: nothing is evaluated, so the card must not read as 'all healthy' */
+.stats.unmonitored{background:var(--control-grey);color:#4A5560}
+.stats.unmonitored .stat{border-left-color:#CBD5DD}
+.stats.unmonitored .k{color:#6B7782}
+.stats.unmonitored .v small{color:#6B7782}
+
+/* ---------------- Table */
+.tbl{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+col.c-obj{width:var(--w-obj)} col.c-t{width:var(--w-t)} col.c-a{width:var(--w-a)} col.c-c{width:var(--w-c)} col.c-time{width:var(--w-time)} col.c-r{width:var(--w-r)}
+/* fixed height + inset rule: every header cell ends on the same pixel row at any width */
+.tbl thead th{font-weight:500;color:var(--text-muted);font-size:12.5px;text-align:left;padding:0 var(--cell-x);height:42px;box-shadow:inset 0 -1px 0 var(--control-grey);
+  position:sticky;top:calc(-1 * var(--left-pad-top));background:var(--white);z-index:2;white-space:nowrap}
+/* one continuous shadow under the stuck header (each cell draws a full-width slice, so slices join seamlessly) */
+.tbl thead th::after{content:'';position:absolute;left:0;right:0;top:100%;height:10px;background:linear-gradient(rgba(0,22,137,.10),rgba(0,22,137,0));
+  opacity:0;transition:opacity .2s;pointer-events:none}
+.left.stuck .tbl thead th::after{opacity:1}
+.tbl td{padding:14px var(--cell-x);border-bottom:1px solid var(--row-divider);vertical-align:middle}
+.tbl tr.grp th{text-align:left;font-size:12px;font-weight:600;color:var(--text-muted);padding:22px var(--cell-x) 8px;border-bottom:1px solid var(--control-grey);letter-spacing:.01em}
+.tbl tr.grp:first-child th{padding-top:14px}
+.tbl tr.grp .cnt{display:inline-block;min-width:20px;padding:0 6px;margin-left:6px;border-radius:100px;background:var(--control-grey);color:#4A5560;text-align:center;font-weight:600}
+.tbl tr.grp.attn .cnt{background:var(--critical-bg);color:var(--critical)}
+.tbl tr.grp .gsub{font-weight:400;color:var(--text-muted);margin-left:8px}
+.tbl tr.grp.acked th{padding-top:16px;font-weight:500;border-bottom-color:var(--row-divider)}
+.linkbtn{border:0;background:none;padding:2px 4px;margin:-2px 0 -2px 8px;color:var(--blue);font-weight:600;cursor:pointer;border-radius:6px;font-size:12px}
+.linkbtn:hover{text-decoration:underline}
+.tbl tr.alertrow{cursor:pointer}
+.tbl tr.alertrow:focus{outline:none}
+.tbl tr.alertrow:hover td{background:var(--row-hover)}
+.tbl tr.alertrow td:first-child{border-radius:10px 0 0 10px}
+.tbl tr.alertrow td:last-child{border-radius:0 10px 10px 0}
+.tbl tr.sel td,.tbl tr.sel:hover td{background:var(--row-selected);border-bottom-color:transparent}
+.tbl tr.sel td:first-child{box-shadow:inset 4px 0 0 var(--blue)}
+/* the panel shows an older alert of this object (from 'Other alerts'), not the alert in this row */
+.tbl tr.sel.pinned td,.tbl tr.sel.pinned:hover td{background:#F2F7FC}
+.tbl tr.sel.pinned td:first-child{box-shadow:inset 4px 0 0 #7FB0DE}
+.tbl tr.alertrow:focus-visible td{box-shadow:inset 0 2px 0 var(--blue),inset 0 -2px 0 var(--blue)}
+.tbl tr.alertrow:focus-visible td:first-child{box-shadow:inset 2px 0 0 var(--blue),inset 0 2px 0 var(--blue),inset 0 -2px 0 var(--blue)}
+.tbl tr.alertrow.sel:focus-visible td:first-child{box-shadow:inset 4px 0 0 var(--blue),inset 0 2px 0 var(--blue),inset 0 -2px 0 var(--blue)}
+.tbl tr.alertrow:focus-visible td:last-child{box-shadow:inset -2px 0 0 var(--blue),inset 0 2px 0 var(--blue),inset 0 -2px 0 var(--blue)}
+.tbl tr.quiet td{padding-top:8px;padding-bottom:8px}
+.obj{font-weight:700;color:var(--navy);letter-spacing:-.005em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sub{color:var(--text-secondary);font-size:12.5px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tbl tr.sel .sub{color:#4A5560}
+.objrow td:first-child .sub{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;line-height:1.3;margin-top:2px;text-wrap:balance}
+.sevline{display:flex;align-items:flex-start;gap:9px;min-width:0}
+.dot{flex:none;width:8px;height:8px;border-radius:50%;display:inline-block}
+.sevline .dot{margin-top:6px}
+.dot.open{background:var(--critical)}
+.dot.ack{background:transparent;box-shadow:inset 0 0 0 1.5px var(--limit-line)}
+.alert{font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}
+/* One line only. Separators sit before every part; the first falls into the clipped negative margin,
+   so no '·' is ever left dangling at the start of the line. */
+.alert-sub{margin-left:17px;white-space:normal;line-height:1.4;margin-top:2px;overflow:hidden}
+.sis{display:flex;flex-wrap:nowrap;align-items:baseline;margin-left:-13px;min-width:0}
+.si{white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+/* never wrap to a third line: the step name gives way (ellipsis, full text in the tooltip), the limit always shows */
+.si.lim{flex:none}
+.si::before{content:'·';display:inline-block;width:13px;text-align:center;color:#B5C0C9}
+.si.vb + .si::before{content:'';width:6px}   /* the badge is a pill: a gap, not a '·', sets it off */
+/* '+N earlier' sits on the title line as a small badge, so the sub-line stays one line (step · limit) */
+.more{flex:none;display:inline-flex;align-items:center;gap:4px;margin-top:1px;font-size:11px;font-weight:600;line-height:17px;color:#4A5560;
+  background:var(--control-grey);border-radius:100px;padding:0 6px;margin-left:-2px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.more:hover{background:var(--tint-blue);color:var(--navy)}
+.more .dot,.sevline .more .dot{width:6px;height:6px;margin-top:0}   /* not the title dot's 6px drop: centred in the badge */
+.tbl tr.sel .more{background:#fff;box-shadow:inset 0 0 0 1px var(--tint-blue)}
+/* narrow: 'still open' becomes a red tint instead of a dot, so 'Caustic wash overran' and its badge stay on one line */
+@media (max-width:1499px){.more .mw,.more .dot{display:none}
+  .more.open,.tbl tr.sel .more.open{background:var(--critical-bg);color:var(--critical);box-shadow:none}}
+/* inline, not inline-block: the badge text takes part in the sub-line's ellipsis instead of turning into a bare '…' */
+.viewing{display:inline;font-size:11px;font-weight:600;color:var(--navy);background:#fff;box-shadow:inset 0 0 0 1px var(--tint-blue);border-radius:100px;padding:0 6px;white-space:nowrap}
+@media (max-width:1439px){.viewing{font-size:10.5px;padding:0 5px}}   /* a little tighter so the longest phase name still fits beside the limit */
+@media (max-width:1365px){.viewing .vx{display:none}}   /* narrow: only what tells the panel's alert apart from the row's, so it fits beside the limit */
+.val{display:inline-block;padding:3px 9px;margin-left:-9px;border-radius:100px;white-space:nowrap;color:var(--text-secondary)}
+.tbl tr.sel .val{color:#333}
+.val.breach,.tbl tr.sel .val.breach{background:var(--critical-bg);color:var(--critical);font-weight:600}
+.val.breach.acked,.tbl tr.sel .val.breach.acked{background:var(--control-grey);color:#4A5560;font-weight:500}
+.val.nodata{font-style:italic;color:var(--text-muted)}
+.val.na{color:#B5C0C9}
+.val.suspect,.tbl tr.sel .val.suspect{font-style:italic;color:var(--warning-text)}
+.bang{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:var(--warning-bg);color:var(--warning-text);
+  font-style:normal;font-weight:700;font-size:10px;margin-right:4px;vertical-align:1px;box-shadow:inset 0 0 0 1px var(--warning-dot)}
+/* proposed T/A/C rule (pending Danone sign-off): dashed outline = not an approved rule */
+.val.proposed,.tbl tr.sel .val.proposed{background:#fff;color:var(--critical);font-weight:600;outline:1px dashed var(--critical);outline-offset:-1px}
+.val.proposed.acked,.tbl tr.sel .val.proposed.acked{color:#4A5560;font-weight:500;outline-color:#9FB0BE}
+.ptag{display:inline-block;font-size:10.5px;font-weight:600;line-height:15px;padding:0 6px;border-radius:100px;color:#3D4F63;background:#fff;
+  box-shadow:inset 0 0 0 1px #8FA3B8;white-space:nowrap;letter-spacing:.01em;font-style:normal;vertical-align:1px}
+.ptag.dash{box-shadow:none;outline:1px dashed #7F95AC;outline-offset:-1px}
+.quiet-t{color:var(--text-muted)}
+.raised{white-space:nowrap}
+.raised small{display:block;font-size:11.5px;color:var(--text-muted)}
+.ok{display:flex;align-items:center;gap:9px;color:var(--text-secondary);min-width:0}
+.ok > span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ok .qt{color:var(--text-muted);font-variant-numeric:tabular-nums}
+.ok .qt::before{content:'·';color:#B5C0C9;padding:0 6px}
+.ok svg{width:14px;height:14px;flex:none;margin-left:-3px}
+.ok.noref{color:var(--text-muted)}
+.run-dot{width:14px;height:14px;flex:none;margin-left:-3px;display:inline-flex;align-items:center;justify-content:center}
+.run-dot i{width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 3px rgba(0,94,184,.16)}
+.empty{padding:40px 10px;color:var(--text-muted);text-align:center}
+/* skeleton */
+.sk{display:block;height:10px;border-radius:6px;background:linear-gradient(90deg,#EEF2F5 0%,#F7F9FB 50%,#EEF2F5 100%);background-size:200% 100%;animation:shimmer 1.4s infinite linear}
+@keyframes shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+tr.skel td{padding:20px var(--cell-x)}
+.detail .sk{background:linear-gradient(90deg,#E1E8EE 0%,#ECF1F5 50%,#E1E8EE 100%);background-size:200% 100%}
+
+/* ---------------- Detail panel */
+.detail{background:var(--panel-bg);padding:var(--panel-pad-top) var(--panel-pad-x) 0;display:flex;flex-direction:column;gap:20px;min-width:0;overflow-y:auto;overflow-x:hidden;position:relative}
+.detail.busy > :not(.btn){opacity:.6;transition:opacity .15s}
+.d-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.tag{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--critical);white-space:nowrap}
+.tag.ack{color:var(--text-secondary);font-weight:500}
+.d-obj{color:var(--text-secondary);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+h2{margin:8px 0 0;font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-.018em;line-height:1.22}
+.d-earlier{margin-top:8px;font-size:12.5px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;flex-wrap:wrap}
+.d-earlier .linkbtn{margin:0;padding:2px 0;font-size:12.5px}
+.why{font-size:14.5px;line-height:1.55;color:#222}
+.why b{font-weight:600;color:var(--ink)}
+h3{margin:0 0 10px;font-size:12.5px;font-weight:600;color:var(--navy)}
+h3 span{font-weight:400;color:var(--text-muted)}
+/* other alerts on the object */
+.others{margin-top:12px;border-radius:12px;background:#fff;box-shadow:inset 0 0 0 1px #E3EAF0}
+.others summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;padding:9px 12px;font-size:12.5px;font-weight:500;color:var(--navy);border-radius:12px;min-height:38px;line-height:1.4}
+.others summary .ot{flex:1;min-width:0}
+.others summary .scope{display:block;color:var(--text-muted);font-weight:400;font-size:12px}
+.others summary .scope b{color:var(--navy);font-weight:600}
+.others summary::-webkit-details-marker{display:none}
+.others summary svg{flex:none;width:10px;height:10px;transition:transform .15s}
+.others[open] summary svg{transform:rotate(180deg)}
+.others summary:hover{background:#FAFCFD}
+.olist{list-style:none;margin:0;padding:0 6px 6px}
+.chip{width:100%;display:flex;align-items:center;gap:8px;border:0;background:none;border-radius:8px;padding:7px 8px;font-size:12.5px;cursor:pointer;text-align:left;min-height:34px}
+.chip:hover{background:var(--row-hover)}
+.chip .when{margin-left:auto;color:var(--text-muted);white-space:nowrap}
+.chip .latest{font-size:10.5px;font-weight:600;color:var(--navy);background:var(--tint-blue);border-radius:100px;padding:0 6px}
+.others .note{padding:0 14px 10px;margin:0}
+.olist .div{font-size:11.5px;color:var(--text-muted);padding:8px 8px 4px;margin-top:4px;border-top:1px solid var(--row-divider)}
+
+.steps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
+.step .bar{height:4px;border-radius:2px;background:var(--step-inactive)}
+.step.done .bar{background:var(--blue)}
+.step.now .bar{background:var(--critical)}
+.step.cur .bar{background:linear-gradient(90deg,var(--blue) 50%,var(--step-inactive) 50%)}
+.step.cur .l{color:var(--navy);font-weight:600}
+.step.skip .bar{background:repeating-linear-gradient(90deg,var(--step-inactive) 0 4px,transparent 4px 7px)}
+.step .l{margin-top:7px;font-size:11.5px;color:var(--text-muted);line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.step.now .l{color:var(--critical);font-weight:600}
+.step.skip .l{color:#A9B4BD}
+/* another activity of the same cycle that also ran over its limit: red, but lighter than the alert's own step */
+.step.over .bar{background:var(--critical);opacity:.45}
+.step.over .l{color:var(--critical)}
+
+.tact{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 22px}
+.p{min-width:0}
+.p .row{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.p .name{font-size:13px;color:#333;white-space:nowrap}
+.p .st{font-size:12px;font-weight:500;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p.breach .st{color:var(--critical);font-weight:600}
+.p.suspect .st{color:var(--warning-text)}
+.p .st .ptag{font-size:10px;line-height:15px;padding:0 6px;vertical-align:0}
+.p.pout .lim{color:var(--warning-text);font-weight:600}
+.p.pbreach .lim{color:var(--critical);font-weight:600}
+.p.pbreach .st .ptag{color:var(--critical);outline-color:var(--critical)}
+.why .pnote{display:block;margin-top:6px;font-size:12.5px;color:var(--text-secondary);line-height:1.45}
+.why .pnote .ptag{margin-right:6px}
+.p .read{font-size:var(--read-size);font-weight:600;color:var(--navy);letter-spacing:-.02em;line-height:1.2;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p.breach .read{color:var(--critical)}
+.p.nodata .read{color:#A9B4BD;font-style:italic}
+.p.suspect .read{color:var(--warning-text);font-size:17px;line-height:calc(var(--read-size) * 1.2)}
+.na-note{margin:12px 0 0;font-size:12.5px;color:var(--text-muted);line-height:1.4}
+.p .lim{color:var(--text-muted);font-size:12px;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.p svg{display:block;width:100%;height:32px;margin-top:8px;overflow:visible}
+.p .nospark{height:32px;margin-top:8px;display:flex;align-items:center;font-size:11.5px;color:#A9B4BD}
+
+.checks{margin:0;padding:0;list-style:none}
+.checks li{display:flex;gap:11px;padding:6px 0;font-size:13.5px;color:#222;line-height:1.4}
+.checks li span{color:var(--blue);font-weight:700;width:12px;flex:none}
+.checks li.none{color:var(--text-secondary)}
+.checks li.none span{color:var(--green-tick)}
+/* inline run summary, only on tall screens (the same table as Open run) */
+.runmini{display:none}
+.runmini table{width:100%;border-collapse:collapse;font-size:13px}
+.runmini td{padding:6px 0;border-bottom:1px solid #E6EDF2;vertical-align:middle}
+.runmini tr:last-child td{border-bottom:0}
+.runmini td.r{text-align:right;padding-right:14px;white-space:nowrap;color:#333}
+.runmini td.r small{color:var(--text-muted);font-size:12px}
+.runmini td:last-child{width:1%;white-space:nowrap}
+.runmini .res{font-size:12.5px}
+.runmini tr.now td:first-child{color:var(--critical);font-weight:600}
+@media (min-height:1000px) and (min-width:1180px){.runmini{display:block}}
+
+.btn{margin:auto calc(-1 * var(--panel-pad-x)) 0;position:sticky;bottom:0;padding:14px var(--panel-pad-x) 24px;background:var(--panel-bg);z-index:3;transition:box-shadow .2s}
+.btn.floating{box-shadow:0 -14px 18px -14px rgba(0,22,137,.22)}
+.btn .row2{display:flex;gap:10px}
+.btn button{flex:1;min-height:44px;display:flex;align-items:center;justify-content:center;border-radius:100px;font-weight:600;border:0;cursor:pointer}
+.btn .pri{background:var(--blue);color:#fff}
+.btn .pri:hover:not(:disabled){background:#0052A3}
+.btn .pri:disabled{background:var(--step-inactive);color:#4A5560;cursor:default}
+.btn .sec{background:var(--button-secondary);color:#000}
+.btn .sec:hover{background:#D5DEE5}
+.btn-err{margin-bottom:10px;padding:8px 12px;border-radius:10px;background:var(--critical-bg);color:var(--critical);font-size:12.5px;font-weight:500}
+.btn-note{margin-bottom:10px;font-size:12.5px;color:var(--warning-text)}
+
+/* empty / loading panel */
+.placeholder{margin:auto 0;text-align:center;color:var(--text-secondary);padding:24px 8px}
+.placeholder .ico{width:52px;height:52px;border-radius:50%;background:#fff;box-shadow:inset 0 0 0 1px #E3EAF0;display:flex;align-items:center;justify-content:center;margin:0 auto 14px}
+.placeholder .ico svg{width:24px;height:24px}
+.ep-title{font-size:17px;font-weight:700;color:var(--navy);margin:0 0 6px}
+.placeholder p{margin:0 auto;max-width:320px;line-height:1.5;font-size:13.5px}
+.health{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:20px auto 0;max-width:320px;text-align:left}
+.health div{background:#fff;border-radius:10px;padding:10px 12px;box-shadow:inset 0 0 0 1px #E3EAF0}
+.health b{display:block;font-size:20px;font-weight:600;color:var(--navy);font-variant-numeric:tabular-nums}
+.health div.muted{background:transparent;box-shadow:inset 0 0 0 1px #E3EAF0}
+.health div.muted b{color:#8A96A1}
+.health span{font-size:12px;color:var(--text-muted)}
+.ep-actions{display:flex;gap:8px;justify-content:center;margin-top:18px;flex-wrap:wrap}
+.ep-actions button{border:0;background:var(--button-secondary);border-radius:100px;padding:0 16px;min-height:40px;font-weight:600;cursor:pointer;font-size:13px}
+.ep-actions button:hover{background:#D5DEE5}
+.skel-panel{display:flex;flex-direction:column;gap:22px;padding-top:4px}
+
+/* ---------------- Run dialog */
+dialog{border:0;border-radius:16px;padding:0;width:min(760px,92vw);max-height:88vh;box-shadow:0 20px 60px rgba(0,22,137,.18)}
+dialog::backdrop{background:rgba(0,22,137,.18)}
+.dlg{padding:28px 32px}
+.dlg header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.dlg h2{margin:0}
+.dlg h2 .cyc{color:var(--text-secondary);font-weight:500}
+.dlg h2 .hs{color:#B5C0C9;font-weight:400;padding:0 2px}
+.dlg h2:focus,#dTitle:focus{outline:none}
+.dlg .meta{margin-top:6px;color:var(--text-secondary);font-size:13px;display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px}
+.dlg .meta .sep{color:#B5C0C9}
+.dlg table{width:100%;border-collapse:collapse;margin-top:4px}
+.dlg th{font-weight:500;color:var(--text-muted);font-size:12.5px;text-align:left;padding:8px 10px;border-bottom:1px solid var(--control-grey)}
+.dlg td{padding:9px 10px;border-bottom:1px solid var(--row-divider)}
+.dlg th.r,.dlg td.r{text-align:right}
+.dlg section{margin-top:22px}
+.close{border:0;background:var(--button-secondary);border-radius:100px;width:40px;height:40px;cursor:pointer;font-size:20px;line-height:1;flex:none}
+.close:hover{background:#D5DEE5}
+.close:focus:not(:focus-visible){outline:none}
+.note{font-size:12px;color:var(--text-muted);margin-top:8px}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:100px;padding:2px 10px;font-size:12px;font-weight:600}
+.pill.alert{background:var(--critical-bg);color:var(--critical)}
+.pill.ok{background:#E8F4DF;color:#2F6B0B}
+.pill.muted{background:var(--control-grey);color:#4A5560}
+.res{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+.res-breach{color:var(--critical);font-weight:600}
+.res-warn{color:var(--warning-text);font-weight:600}
+.res-warn .dot{background:var(--warning-dot)}
+.res-ok{color:var(--text-secondary)}
+.res-none{color:var(--text-faint)}
+
+
+/* ---------------- System status (notifications, storage, mode) */
+.sys{position:relative;border:0;background:var(--control-grey);border-radius:100px;width:38px;height:38px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;flex:none;color:#3D4F63}
+.sys:hover{background:#DCE3E9}
+.sys svg{width:17px;height:17px}
+.sys .sd{position:absolute;top:7px;right:8px;width:8px;height:8px;border-radius:50%;box-shadow:0 0 0 2px var(--control-grey);background:#9FB0BE}
+.sys .sd.on{background:var(--live-dot)}
+.sys .sd.warn{background:var(--warning-dot)}
+.sys[aria-expanded="true"]{background:var(--tint-blue);color:var(--navy)}
+.sys[aria-expanded="true"] .sd{box-shadow:0 0 0 2px var(--tint-blue)}
+.pop{position:fixed;z-index:30;background:#fff;border-radius:14px;box-shadow:0 12px 36px rgba(0,22,137,.18),0 0 0 1px rgba(0,22,137,.06);color:var(--ink)}
+.syspop{width:340px;padding:16px 18px 14px;font-size:13px}
+.syspop h4{margin:0 0 2px;font-size:13.5px;font-weight:700;color:var(--navy)}
+.syspop .sp-sub{color:var(--text-muted);font-size:12px;margin-bottom:8px}
+.syspop dl{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:0 14px}
+.syspop dt{color:var(--text-muted);padding:8px 0;border-top:1px solid var(--row-divider);white-space:nowrap}
+.syspop dd{margin:0;padding:8px 0;border-top:1px solid var(--row-divider);min-width:0}
+.syspop dd small{display:block;color:var(--text-muted);font-size:12px;line-height:1.4;margin-top:1px}
+.syspop .ch{display:flex;align-items:center;gap:7px}
+.syspop .ch + .ch{margin-top:3px}
+.syspop .ch i{width:7px;height:7px;border-radius:50%;background:#C9D3DB;flex:none}
+.syspop .ch.on i{background:var(--live-dot)}
+.syspop .ch.bad i{background:var(--warning-dot)}
+.syspop .ch .n{margin-left:auto;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* ---------------- Acknowledge popover (inside the panel, above the action bar) */
+.ackpop{width:360px;padding:16px 18px 16px}
+.ackpop::after{content:'';position:absolute;bottom:-6px;left:var(--arrow-x,60px);width:12px;height:12px;background:#fff;transform:rotate(45deg);box-shadow:3px 3px 4px -2px rgba(0,22,137,.12)}
+.ap-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.ap-head b{font-size:14.5px;color:var(--navy);white-space:nowrap;flex:none}
+.ap-head span{color:var(--text-muted);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ap-who{margin-top:10px;display:flex;align-items:center;gap:6px;font-size:13px;color:var(--text-secondary);min-width:0}
+.ap-who b{color:var(--ink);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.ap-who .linkbtn{margin:0 0 0 2px;flex:none}
+.ap-field{display:block;margin-top:12px}
+.ap-field > span{display:flex;justify-content:space-between;font-size:12.5px;font-weight:600;color:#333;margin-bottom:5px}
+.ap-field em{font-style:normal;font-weight:400;color:var(--text-muted)}
+.ap-field input,.ap-field textarea{width:100%;font:inherit;font-size:13.5px;color:var(--ink);border:1px solid #C9D3DB;border-radius:10px;padding:9px 11px;background:#fff;resize:none;line-height:1.4}
+.ap-field input:focus,.ap-field textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,94,184,.15)}
+.ap-field input[aria-invalid="true"]{border-color:var(--critical);box-shadow:0 0 0 3px rgba(200,40,28,.12)}
+.ap-count{display:block;text-align:right;font-size:11.5px;color:var(--text-muted);margin-top:3px;font-variant-numeric:tabular-nums}
+.ap-err{margin-top:10px;padding:7px 10px;border-radius:8px;background:var(--critical-bg);color:var(--critical);font-size:12.5px;font-weight:500}
+.ap-actions{display:flex;gap:8px;margin-top:12px}
+.ap-actions button{flex:1;min-height:40px;border-radius:100px;border:0;font-weight:600;cursor:pointer;font-size:13.5px}
+.ap-actions .ap-cancel{background:var(--button-secondary)}
+.ap-actions .ap-cancel:hover{background:#D5DEE5}
+.ap-actions .ap-ok{background:var(--blue);color:#fff}
+.ap-actions .ap-ok:hover:not(:disabled){background:#0052A3}
+.ap-actions .ap-ok:disabled{background:var(--step-inactive);color:#4A5560;cursor:default}
+
+/* acknowledgement line in the action bar, and the alert's audit trail */
+.ackline{display:flex;align-items:center;gap:7px;margin-bottom:10px;font-size:12.5px;color:var(--text-secondary);min-width:0;white-space:nowrap}
+.ackline svg{flex:none;width:13px;height:13px}
+.ackline b{color:#222;font-weight:600;overflow:hidden;text-overflow:ellipsis;flex:0 1 auto;min-width:0}
+.ackline .an{overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1 1 0;color:#333}
+.ackline .at{flex:none;color:var(--text-muted)}
+.trail{list-style:none;margin:0;padding:0}
+.trail li{position:relative;display:flex;gap:11px;padding:0 0 10px;font-size:13px;line-height:1.4;color:#222}
+.trail li:last-child{padding-bottom:0}
+.trail li::before{content:'';position:absolute;left:4px;top:14px;bottom:-2px;width:1px;background:#D5DEE5}
+.trail li:last-child::before{display:none}
+.trail .td{flex:none;width:9px;height:9px;border-radius:50%;margin-top:5px;background:#fff;box-shadow:inset 0 0 0 2px var(--limit-line)}
+.trail .t-raised .td{box-shadow:inset 0 0 0 2px var(--critical)}
+.trail .t-ack .td{background:var(--blue);box-shadow:none}
+.trail .t-sent .td{box-shadow:inset 0 0 0 2px var(--green-tick)}
+.trail .t-failed .td{box-shadow:inset 0 0 0 2px var(--warning-dot)}
+.trail .tw{min-width:0;flex:1}
+.trail .tt{display:flex;justify-content:space-between;gap:10px}
+.trail .tt b{font-weight:600;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.trail .tt span{flex:none;color:var(--text-muted);font-size:12px;font-variant-numeric:tabular-nums}
+.trail q{display:block;margin-top:3px;padding:6px 10px;background:#fff;border-radius:8px;box-shadow:inset 0 0 0 1px #E3EAF0;color:#333;font-size:12.5px;quotes:none;overflow-wrap:anywhere}
+.trail .tm{color:var(--text-muted);font-size:12px}
+
+/* ---------------- Views: Run history and Audit log */
+.view{flex:1;min-height:0;overflow:auto;padding:var(--left-pad-top) var(--side) 40px;position:relative}
+.view .vsub{margin:6px 0 0;color:var(--text-secondary);font-size:13.5px;max-width:820px;line-height:1.5}
+.view .vsub b{color:var(--ink);font-weight:600}
+.view .stats{margin-top:18px;margin-bottom:0}
+.filters{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:18px 0 4px}
+.filters .count{margin-left:auto;color:var(--text-muted);font-size:13px;white-space:nowrap}
+.pillbtn{display:inline-flex;align-items:center;gap:8px;min-height:38px;padding:0 16px;border-radius:100px;background:var(--button-secondary);color:#000;font-weight:600;font-size:13px;text-decoration:none;border:0;cursor:pointer;white-space:nowrap}
+.pillbtn:hover{background:#D5DEE5}
+.pillbtn svg{width:14px;height:14px;flex:none}
+.filters .count + .pillbtn{margin-left:4px}
+.vt{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed}
+.vt thead th{font-weight:500;color:var(--text-muted);font-size:12.5px;text-align:left;padding:0 10px;height:42px;box-shadow:inset 0 -1px 0 var(--control-grey);
+  position:sticky;top:calc(-1 * var(--left-pad-top));background:var(--white);z-index:2;white-space:nowrap}
+.vt td{padding:12px 10px;border-bottom:1px solid var(--row-divider);vertical-align:middle;font-size:13.5px;min-width:0}
+.vt td.t{white-space:nowrap;font-variant-numeric:tabular-nums}
+.vt td.t small,.vt td small.s{display:block;font-size:12px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt .clip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vt tr.click{cursor:pointer}
+.vt tr.click:hover td{background:var(--row-hover)}
+.vt tr.click:focus{outline:none}
+.vt tr.click:focus-visible td{box-shadow:inset 0 2px 0 var(--blue),inset 0 -2px 0 var(--blue)}
+.vt tr.click td:first-child{border-radius:10px 0 0 10px}
+.vt tr.click td:last-child{border-radius:0 10px 10px 0}
+.vt .empty{padding:48px 10px}
+.vt .note-c{color:#333;overflow-wrap:anywhere}
+.vt .note-c q{quotes:'“' '”'}
+.vt .nw{white-space:nowrap}
+.vt .muted{color:var(--text-muted)}
+.more-row{display:flex;justify-content:center;padding:16px 0 4px}
+.ev{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:100px;padding:2px 10px;white-space:nowrap;line-height:18px}
+.ev.raised{background:var(--critical-bg);color:var(--critical)}
+.ev.ack{background:var(--tint-blue);color:var(--navy)}
+.ev.sent{background:#E8F4DF;color:#2F6B0B}
+.ev.failed{background:var(--warning-bg);color:var(--warning-text)}
+.ev.sys{background:var(--control-grey);color:#4A5560}
+.alink{border:0;background:none;padding:0;font:inherit;color:var(--blue);font-weight:600;cursor:pointer;text-align:left;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.alink:hover{text-decoration:underline}
+.alink.gone{color:var(--text-secondary);font-weight:500;cursor:default;text-decoration:none}
+/* activity times of a run as six small bars (the panel's step bar in miniature) */
+.msteps{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:3px;width:120px;margin-bottom:6px}
+.msteps i{height:5px;border-radius:3px;background:var(--step-inactive)}
+.msteps i.ok{background:var(--blue)}
+.msteps i.norule{background:#9FB0BE}
+.msteps i.over{background:var(--critical)}
+.msteps i.skip{background:repeating-linear-gradient(90deg,var(--step-inactive) 0 3px,transparent 3px 5px)}
+.mres{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mres.over{color:var(--critical);font-weight:600}
+.mres.ok{color:var(--text-secondary)}
+.mres.none{color:var(--text-faint)}
+.acnt{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.acnt.zero{color:var(--text-faint)}
+.dlg .alist{list-style:none;margin:0;padding:0}
+.dlg .alist li{display:flex;align-items:center;gap:10px;padding:9px 10px;border-bottom:1px solid var(--row-divider);font-size:13.5px}
+.dlg .alist li .when{margin-left:auto;color:var(--text-muted);white-space:nowrap}
+.dlg .alist .linkbtn{margin:0}
+
+/* ---------------- Screen sizes */
+@media (max-width:1499px){
+  :root{--side:32px;--left-pad-top:28px;--left-pad-right:28px;--panel-pad-x:28px;--panel-pad-top:26px;
+    --w-obj:160px;--w-t:90px;--w-a:100px;--w-c:112px;--w-time:88px;--w-r:62px;--cell-x:8px;--read-size:22px}
+  .top{gap:24px}
+  .nav a{padding:8px 12px}
+  .stat{padding:0 20px}
+  .step .l{font-size:11px;letter-spacing:-.005em}
+  .p .name{font-size:12.5px} .p .st{font-size:11.5px}
+  .soon{display:none}            /* room for the system-status button; the items stay greyed with a 'Coming soon' tooltip */
+}
+@media (max-width:1365px){
+  /* narrower value columns (still wider than their headers and readings), so an alert title and its +N badge share one line */
+  :root{--w-a:90px;--w-c:104px;--w-time:80px;--w-r:56px;--left-pad-right:24px}
+  .nav a[aria-disabled]{display:none}   /* narrow laptops: only the pages that work */
+  .live .long{display:none}
+  .top{gap:22px}
+  .nav a{padding:8px 11px}
+  .right{gap:12px}
+}
+@media (min-width:1800px){
+  :root{--w-obj:190px;--w-t:124px;--w-a:128px;--w-c:140px;--w-time:108px;--w-r:80px;--panel-pad-x:40px}
+}
+@media (max-height:800px) and (min-width:1180px){
+  :root{--left-pad-top:20px;--panel-pad-top:22px}
+  .stats{margin-top:14px;padding:16px 8px;min-height:84px}
+  .stat .v{font-size:28px} .stat .v small{font-size:15px}
+  /* compact panel, so the data checks show above the Acknowledge / Open run bar on laptop screens */
+  .detail{gap:14px}
+  h2{font-size:20px;margin-top:6px}
+  .why{font-size:13.5px;line-height:1.5}
+  .others{margin-top:10px}
+  h3{margin-bottom:8px}
+  .tact{gap:12px 20px}
+  .p .read{--read-size:20px}
+  .p svg,.p .nospark{height:22px;margin-top:5px}
+  .checks li{padding:3px 0;font-size:13px}
+  .btn{padding:10px var(--panel-pad-x) 14px}
+}
+/* Very large screens: scale the whole page up so type stays readable and no band is left empty */
+@media (min-width:2200px) and (min-height:1100px){
+  .top,.banner,.page{zoom:1.2}
+}
+@media (max-width:1179px){
+  body{display:block;overflow:auto;height:auto}
+  .top{height:auto;min-height:var(--top-h);flex-wrap:wrap;padding:12px 24px;gap:10px 20px}
+  .right{margin-left:0;flex-wrap:wrap}
+  .page{display:block}
+  .left{overflow:visible;padding:24px}
+  .tblwrap{overflow-x:auto}
+  .tbl{min-width:760px}
+  .tbl thead th{position:static}
+  .detail{overflow:visible;padding:24px 24px 0;--panel-pad-x:24px}
+  .toast{left:50%;top:auto;bottom:24px}
+  .view{overflow:visible;padding:24px}
+  .vtwrap{overflow-x:auto}
+  .vt{min-width:880px}
+  .vt thead th{position:static}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span>DANONE</span><em>CIP Monitor</em></div>
+  <nav class="nav" aria-label="Main">
+    <a href="#" data-view="overview" aria-current="page">Overview</a>
+    <a href="#runs" data-view="runs">Run history</a>
+    <a href="#audit" data-view="audit">Audit log</a>
+    <a aria-disabled="true" title="Coming soon">Objects<span class="soon">Soon</span></a>
+    <a aria-disabled="true" title="Coming soon">Recipes<span class="soon">Soon</span></a>
+  </nav>
+  <div class="right">
+    <div class="live idle" id="live" role="status"><i></i><span>Connecting…</span></div>
+    <label class="select" title="CIP line">
+      <select id="line" aria-label="CIP line"><option value="">Ambala plant · all lines</option></select>
+      <svg viewBox="0 0 10 10" fill="none" stroke="#5B616B" stroke-width="1.5" aria-hidden="true"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg>
+    </label>
+    <label class="select" title="Period" id="periodWrap">
+      <select id="period" aria-label="Period">
+        <option value="24h">Last 24 hours</option><option value="7d">Last 7 days</option><option value="all">All data</option>
+      </select>
+      <svg viewBox="0 0 10 10" fill="none" stroke="#5B616B" stroke-width="1.5" aria-hidden="true"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg>
+    </label>
+    <button type="button" class="sys" id="sysBtn" aria-haspopup="dialog" aria-expanded="false" aria-controls="sysPop" title="System status and notifications">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 8.2a5 5 0 0 1 10 0c0 4.3 1.6 5.6 1.6 5.6H3.4S5 12.5 5 8.2"/><path d="M8.3 16.6a1.9 1.9 0 0 0 3.4 0"/></svg>
+      <i class="sd" id="sysDot" aria-hidden="true"></i><span class="sr-only" id="sysSr">System status</span>
+    </button>
+  </div>
+</header>
+<div class="banner" id="banner" role="alert" hidden></div>
+
+<div class="page" id="viewOverview">
+  <section class="left" aria-label="Overview">
+    <div class="left-in">
+    <h1>Overview</h1>
+    <div class="stats skel" id="stats" aria-busy="true">
+      <div class="stat"><div class="v num">–</div><div class="k">Alerts · last 24 h</div></div>
+      <div class="stat"><div class="v num">–</div><div class="k">Unacknowledged</div></div>
+      <div class="stat"><div class="v num">– <small>of –</small></div><div class="k">Objects with alerts</div></div>
+      <div class="stat"><div class="v num">–</div><div class="k">CIP runs in progress</div></div>
+    </div>
+    <div class="tblwrap">
+    <table class="tbl">
+      <caption class="sr-only">CIP objects and their latest alert</caption>
+      <colgroup><col class="c-obj"><col><col class="c-t"><col class="c-a"><col class="c-c"><col class="c-time"><col class="c-r"></colgroup>
+      <thead><tr><th scope="col">Object</th><th scope="col">Alert</th><th scope="col">Temperature</th><th scope="col">Action</th><th scope="col">Concentration</th><th scope="col">Time</th><th scope="col">Raised</th></tr></thead>
+      <tbody id="rows" aria-busy="true">
+        <tr class="skel"><td><span class="sk" style="width:70%"></span><span class="sk" style="width:50%;margin-top:8px"></span></td><td><span class="sk" style="width:60%"></span><span class="sk" style="width:35%;margin-top:8px"></span></td><td><span class="sk" style="width:60%"></span></td><td><span class="sk" style="width:70%"></span></td><td><span class="sk" style="width:65%"></span></td><td><span class="sk" style="width:60%"></span></td><td><span class="sk" style="width:70%"></span></td></tr>
+        <tr class="skel"><td><span class="sk" style="width:60%"></span><span class="sk" style="width:70%;margin-top:8px"></span></td><td><span class="sk" style="width:50%"></span><span class="sk" style="width:30%;margin-top:8px"></span></td><td><span class="sk" style="width:55%"></span></td><td><span class="sk" style="width:65%"></span></td><td><span class="sk" style="width:70%"></span></td><td><span class="sk" style="width:55%"></span></td><td><span class="sk" style="width:70%"></span></td></tr>
+        <tr class="skel"><td><span class="sk" style="width:75%"></span><span class="sk" style="width:45%;margin-top:8px"></span></td><td><span class="sk" style="width:65%"></span><span class="sk" style="width:40%;margin-top:8px"></span></td><td><span class="sk" style="width:60%"></span></td><td><span class="sk" style="width:60%"></span></td><td><span class="sk" style="width:60%"></span></td><td><span class="sk" style="width:60%"></span></td><td><span class="sk" style="width:70%"></span></td></tr>
+        <tr class="skel"><td><span class="sk" style="width:65%"></span><span class="sk" style="width:55%;margin-top:8px"></span></td><td><span class="sk" style="width:45%"></span></td><td colspan="5"></td></tr>
+        <tr class="skel"><td><span class="sk" style="width:70%"></span><span class="sk" style="width:60%;margin-top:8px"></span></td><td><span class="sk" style="width:40%"></span></td><td colspan="5"></td></tr>
+      </tbody>
+    </table>
+    </div>
+    </div>
+  </section>
+  <aside class="detail" id="detail" aria-label="Alert details" aria-busy="true">
+    <div class="skel-panel" aria-hidden="true">
+      <div><span class="sk" style="width:30%"></span><span class="sk" style="width:80%;height:20px;margin-top:14px"></span></div>
+      <div><span class="sk"></span><span class="sk" style="width:90%;margin-top:8px"></span><span class="sk" style="width:60%;margin-top:8px"></span></div>
+      <div><span class="sk" style="width:25%"></span><span class="sk" style="height:4px;margin-top:12px"></span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:22px"><span class="sk" style="height:84px"></span><span class="sk" style="height:84px"></span><span class="sk" style="height:84px"></span><span class="sk" style="height:84px"></span></div>
+    </div>
+    <span class="sr-only">Loading…</span>
+  </aside>
+</div>
+
+<main class="view" id="viewRuns" aria-labelledby="runsH" hidden>
+  <h1 id="runsH" tabindex="-1">Run history</h1>
+  <p class="vsub" id="runsSub">Closed CIP runs, newest first: each activity’s time against its alert limit, and the alerts the run raised.</p>
+  <div class="stats" id="runStats"></div>
+  <div class="filters">
+    <label class="select" title="Object"><select id="runObj" aria-label="Object"><option value="">All objects</option></select>
+      <svg viewBox="0 0 10 10" fill="none" stroke="#5B616B" stroke-width="1.5" aria-hidden="true"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></label>
+    <label class="select" title="Run status"><select id="runStatus" aria-label="Run status">
+      <option value="">Every status</option><option value="ALERT">Alert raised</option><option value="OK">No alerts</option><option value="NO REFERENCE">Not monitored</option></select>
+      <svg viewBox="0 0 10 10" fill="none" stroke="#5B616B" stroke-width="1.5" aria-hidden="true"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></label>
+    <span class="count" id="runCount" role="status"></span>
+  </div>
+  <div class="vtwrap"><table class="vt" id="runTable">
+    <caption class="sr-only">Closed CIP runs</caption>
+    <colgroup><col style="width:17%"><col style="width:14%"><col style="width:12%"><col style="width:9%"><col><col style="width:12%"><col style="width:12%"></colgroup>
+    <thead><tr><th scope="col">Object</th><th scope="col">Run</th><th scope="col">Ended</th><th scope="col">Duration</th><th scope="col">Activity times</th><th scope="col">Alerts</th><th scope="col">Status</th></tr></thead>
+    <tbody id="runRows"><tr><td colspan="7" class="empty">Loading run history…</td></tr></tbody>
+  </table></div>
+  <div class="more-row" id="runMore" hidden><button type="button" class="pillbtn" id="runMoreBtn">Show more runs</button></div>
+</main>
+<main class="view" id="viewAudit" aria-labelledby="auditH" hidden>
+  <h1 id="auditH" tabindex="-1">Audit log</h1>
+  <p class="vsub" id="auditSub">Every alert raised, acknowledgement and notification, newest first. Entries are append-only: they cannot be edited or deleted.</p>
+  <div class="filters">
+    <label class="select" title="Object"><select id="audObj" aria-label="Object"><option value="">All objects</option></select>
+      <svg viewBox="0 0 10 10" fill="none" stroke="#5B616B" stroke-width="1.5" aria-hidden="true"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></label>
+    <label class="select" title="Event type"><select id="audType" aria-label="Event type">
+      <option value="">Every event</option><option value="acknowledged">Acknowledgements</option><option value="alert_raised">Alerts raised</option>
+      <option value="notification_sent,notification_failed">Notifications</option><option value="service_started,replay_restarted">Service events</option></select>
+      <svg viewBox="0 0 10 10" fill="none" stroke="#5B616B" stroke-width="1.5" aria-hidden="true"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></label>
+    <span class="count" id="audCount" role="status"></span>
+    <a class="pillbtn" id="audCsv" href="/api/audit.csv" download title="Download the audit log with the current filters as CSV (opens in Excel)">
+      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2.5v8M4.8 7.5 8 10.7l3.2-3.2M3 13.5h10"/></svg>Export CSV</a>
+  </div>
+  <div class="vtwrap"><table class="vt" id="audTable">
+    <caption class="sr-only">Audit log entries</caption>
+    <colgroup><col style="width:12%"><col style="width:11%"><col style="width:14%"><col style="width:16%"><col style="width:18%"><col style="width:11%"><col></colgroup>
+    <thead><tr><th scope="col">Recorded</th><th scope="col">Plant time</th><th scope="col">Event</th><th scope="col">Object</th><th scope="col">Alert</th><th scope="col">By</th><th scope="col">Note / details</th></tr></thead>
+    <tbody id="audRows"><tr><td colspan="7" class="empty">Loading the audit log…</td></tr></tbody>
+  </table></div>
+  <div class="more-row" id="audMore" hidden><button type="button" class="pillbtn" id="audMoreBtn">Show more entries</button></div>
+</main>
+
+<dialog id="run" aria-labelledby="runTitle"><div class="dlg" id="runBody"></div></dialog>
+<div class="pop syspop" id="sysPop" role="dialog" aria-labelledby="sysPopTitle" hidden></div>
+<div class="pop ackpop" id="ackPop" role="dialog" aria-labelledby="ackPopTitle" hidden>
+  <form id="ackForm" novalidate>
+    <div class="ap-head"><b id="ackPopTitle">Acknowledge alert</b><span id="apObj"></span></div>
+    <div class="ap-who" id="apWho" hidden>Acknowledging as <b id="apWhoName"></b><button type="button" class="linkbtn" id="apChange">Change</button></div>
+    <label class="ap-field" id="apNameField"><span>Your name</span><input id="apName" maxlength="64" autocomplete="name" spellcheck="false"></label>
+    <label class="ap-field"><span>Note <em>optional</em></span><textarea id="apNote" maxlength="280" rows="2" placeholder="What was checked or done"></textarea><small class="ap-count" id="apCount">0 / 280</small></label>
+    <div class="ap-err" id="apErr" role="alert" hidden></div>
+    <div class="ap-actions"><button type="button" class="ap-cancel" id="apCancel">Cancel</button><button type="submit" class="ap-ok" id="apOk">Acknowledge</button></div>
+  </form>
+</div>
+<div class="toast" id="toast" role="status" hidden><span id="toastText"></span><button type="button" id="toastClose">Dismiss</button></div>
+<div class="sr-only" id="announce" aria-live="polite"></div>
+
+<script>
+const POLL_MS = 2000;
+const ACTIVITIES = ['Pre Rinse','Caustic','Mid Rinse','Acid','Final Rinse','Final Drain'];
+const ACTIVITY_LABELS = {'Pre Rinse':'Pre-rinse','Caustic':'Caustic wash','Mid Rinse':'Mid rinse','Acid':'Acid wash','Final Rinse':'Final rinse','Final Drain':'Final drain'};
+const STEP_LABELS = {'Pre Rinse':'Pre-rinse','Caustic':'Caustic','Mid Rinse':'Mid rinse','Acid':'Acid','Final Rinse':'Final rinse','Final Drain':'Drain'};
+const PERIOD_TEXT = {'24h':'last 24 h','7d':'last 7 days','all':'all data'};
+const PERIOD_MS = {'24h':864e5, '7d':6048e5};
+const PERIOD_BEFORE = {'24h':'Before the last 24 hours','7d':'Before the last 7 days'};
+// PLC step and signal names -> client-facing wording (the PLC column 'Return Conducivity' is misspelt)
+const STEP_TEXT = {'Fill To Tank':'Tank fill','Fill Circuit':'Circuit fill','Start Next Activity':'Step change','Circulation':'Circulation'};
+const SIGNAL_TEXT = {'Return Flow':'Return flow','Supply Flow':'Supply flow','Return Conducivity':'Return conductivity','Return Temp':'Return temperature'};
+const SIGNAL_RANGE = {'Return Flow':[0,60000,'L/h'],'Supply Flow':[0,60000,'L/h'],'Return Conducivity':[0,250,'mS/cm'],'Return Temp':[-5,120,'°C']};
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const STATUS_TEXT = {out_of_limit:'Out of limit', within_limit:'Within limit', not_evaluated:'Not evaluated', no_data:'No data', not_applicable:'Not used in step', suspect:'Invalid reading',
+  p_breach:'Outside proposed limit', p_outside:'Outside proposed limit', p_within:'Within proposed limit'};
+// Proposed T/A/C rules (rules/proposed_tact_rules.json): derived from the July 2026 data, never an approved limit
+const SIGN_OFF = 'Proposed — pending Danone sign-off';
+const PARAM_WORD = {Temperature:'temperature', Action:'flow', Concentration:'concentration'};
+const PARAM_SHORT = {Temperature:'temp.', Action:'flow', Concentration:'conc.'};
+const PROPOSED_LINE = '#E08A12';
+const CYCLE_STATUS = {'OK':['ok','No alerts'], 'ALERT':['alert','Alert raised'], 'NO REFERENCE':['muted','Not monitored']};
+const DEFAULT_RANGES = {Temperature:[-5,120], Action:[0,60000], Concentration:[0,250]};
+const DECIMALS = {'°C':1, 'L/hr':0, 'mS/cm':1, 'min':1};
+const UNITS = {'L/hr':'L/h'};
+const state = {period:'24h', line:'', selectedId:null, selObj:null, pinned:false, instance:null, overview:null, detail:null, connected:true, lastOk:null,
+  showUnmonitored:null, othersOpenFor:null, scrollToOthers:false, ackError:null, replayCount:null, loadingId:null,
+  acking:false, focusAfterRender:false, statusAt:null, view:'overview', ackOpen:false,
+  runs:null, runsKey:null, runsShown:100, runObj:'', runStatus:'',
+  audit:null, auditKey:null, auditLimit:100, audObj:'', audType:''};
+const $ = id => document.getElementById(id);
+
+// ---------- formatting
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const NF = {};
+const nf = (d, min) => NF[d + '/' + min] ||= new Intl.NumberFormat('en-GB', {minimumFractionDigits:min, maximumFractionDigits:d, signDisplay:'negative'});
+const fmt = (v, d=1, min=d) => v == null ? null : nf(d, min).format(v).replace('-', '−');   // typographic minus
+const fmtMin = v => fmt(v, 1, 0);       // minutes: 26 min, 23.8 min (no meaningless '.0')
+const hhmm = iso => iso ? iso.slice(11,16) : '';
+const day = iso => iso ? `${+iso.slice(8,10)} ${MONTHS[+iso.slice(5,7)-1]}` : '';
+const when = iso => iso ? `${day(iso)} ${hhmm(iso)}` : '';
+const sameDay = (a,b) => a && b && a.slice(0,10) === b.slice(0,10);
+const label = phase => ACTIVITY_LABELS[phase] || phase;
+function fmtValue(v, unit){
+  if (v == null) return null;
+  return `${unit === 'min' ? fmtMin(v) : fmt(v, DECIMALS[unit] ?? 2)} ${UNITS[unit] || unit}`;
+}
+const stepText = s => s ? (STEP_TEXT[s] || s.charAt(0) + s.slice(1).toLowerCase()) : '';
+// wall-clock (UTC on the server) times, shown in the viewer's own time zone
+const pad2 = n => String(n).padStart(2, '0');
+function wallWhen(iso, year = false){
+  if (!iso) return '';
+  const d = new Date(iso); if (isNaN(d)) return iso;
+  return `${d.getDate()} ${MONTHS[d.getMonth()]}${year ? ' ' + d.getFullYear() : ''} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+}
+const EVENT_TEXT = {alert_raised:'Alert raised', acknowledged:'Acknowledged', notification_sent:'Notification sent',
+  notification_failed:'Notification failed', service_started:'Monitor started', replay_restarted:'Replay restarted'};
+const EVENT_CLASS = {alert_raised:'raised', acknowledged:'ack', notification_sent:'sent', notification_failed:'failed'};
+const CHANNEL_TEXT = {teams:'Microsoft Teams', email:'Email'};
+const plural = (n, w, ws = w + 's') => `${n.toLocaleString('en-GB')} ${n === 1 ? w : ws}`;
+const objectRow = (line, objectId) => state.overview?.objects.find(o => o.line === line && o.objectId === objectId);
+const titleOf = a => a.proposed ? `${label(a.phase)} ${PARAM_WORD[a.parameter] || a.parameter} below proposed limit` : `${label(a.phase)} ran over its time limit`;
+const shortTitleOf = a => a.proposed ? `${label(a.phase)} ${PARAM_SHORT[a.parameter] || a.parameter} low` : `${label(a.phase)} overran`;
+const ptag = (text = 'Proposed', extra = '') => `<span class="ptag dash" title="${esc(SIGN_OFF + extra)}">${text}</span>`;
+// 'above the proposed limit' / 'below ...' wording for a proposed evaluation of one reading
+const proposedVerdict = pp => pp.status === 'outside' ? 'below the proposed limit' : pp.status === 'within' ? 'within the proposed limit' : 'not checked by the proposed rule';
+const tactOf = a => Object.fromEntries((a.tact || []).map(p => [p.parameter, p]));
+const ranges = () => state.detail?.plausibleRanges || state.overview?.plausibleRanges || DEFAULT_RANGES;
+function implausible(p){
+  const r = ranges()[p.parameter];
+  return !!r && p.value != null && (p.value < r[0] || p.value > r[1]);
+}
+const rangeText = p => { const r = ranges()[p.parameter]; return r ? `${fmt(r[0], DECIMALS[p.unit] ?? 0)}\u2060–\u2060${fmtValue(r[1], p.unit).replace(' ', '\u00A0')}` : ''; };
+
+// ---------- data
+async function api(path, opts){
+  const res = await fetch(path, opts);
+  if (!res.ok){
+    const err = new Error(`${res.status} ${path}`); err.status = res.status;
+    try { err.detail = (await res.json()).error; } catch {}
+    throw err;
+  }
+  return res.json();
+}
+let pollTimer = null, generation = 0;
+async function refresh(){
+  clearTimeout(pollTimer);
+  const gen = ++generation;
+  try {
+    const q = new URLSearchParams({period: state.period}); if (state.line) q.set('line', state.line);
+    const ov = await api(`/api/overview?${q}`);
+    if (gen !== generation) return;                       // a newer refresh superseded this one
+    noteReplayRestart(ov.status);
+    if (!state.connected && toastKind === 'offline') hideToast();   // back online: the 'reconnect to…' hint no longer applies
+    state.overview = ov; state.connected = true; state.lastOk = ov.status.clock; state.statusAt = Date.now();
+    const all = ov.objects.flatMap(o => o.alerts);
+    const ids = new Set(all.map(a => a.id));
+    if (!state.selectedId || (!ids.has(state.selectedId) && !state.pinned)){
+      const first = all.filter(a => !a.acknowledgedAt).sort((a,b) => b.raisedAt.localeCompare(a.raisedAt))[0] || all[0];
+      state.selectedId = first ? first.id : null; state.selObj = first ? first.line + '|' + first.objectId : null; state.pinned = false;
+    }
+    const want = state.selectedId;
+    let detail = null;
+    if (want){
+      try { detail = await api(`/api/alerts/${encodeURIComponent(want)}`); }
+      catch (err){ if (err.status !== 404) throw err; }
+    }
+    if (gen !== generation) return;
+    if (state.selectedId === want){                      // drop a detail fetched for an outdated selection
+      state.detail = detail;
+      if (detail) state.selObj = detail.alert.line + '|' + detail.alert.objectId;
+      if (want && !detail){ state.selectedId = null; state.selObj = null; state.pinned = false; }
+    }
+  } catch (err) {
+    if (gen !== generation) return;
+    state.connected = false;
+  }
+  render();
+  pollTimer = setTimeout(refresh, POLL_MS);
+}
+function noteReplayRestart(s){
+  const n = s.replayCount ?? 0;
+  // acknowledgements are stored on disk (audit log) unless the server fell back to memory, so say which
+  const kept = s.store?.persistent !== false;
+  let msg = null;
+  if (state.replayCount != null && n > state.replayCount)
+    msg = `Replay restarted (pass ${n + 1}): the log data plays again from the start. ` +
+      (kept ? 'Acknowledgements are kept and reappear with their alerts.' : 'Acknowledgements were reset: this server keeps them in memory only.');
+  else if ((state.instance && s.instance && s.instance !== state.instance) || (state.lastOk && s.clock && s.clock < state.lastOk))
+    msg = !kept ? 'The monitor restarted, so acknowledgements were reset: this server keeps them in memory only.'
+      : s.mode === 'live' ? 'The monitor restarted and shows readings received since then. Acknowledgements and run history are kept.'
+      : 'The monitor restarted. Acknowledgements are kept and reappear with their alerts.';   // the clock here may still be catching up, so no time is given
+  if (msg){
+    toast(msg);
+    state.selectedId = null; state.selObj = null; state.pinned = false; state.detail = null; state.othersOpenFor = null;
+  }
+  state.replayCount = n; state.instance = s.instance || state.instance;
+}
+
+// ---------- render helpers
+function swap(el, html){
+  if (el.__html === html) return false;
+  const a = document.activeElement;
+  let key = null;
+  if (a && a !== el && el.contains(a)){
+    if (a.id) key = '#' + CSS.escape(a.id);
+    else if (a.dataset?.id) key = `${a.tagName.toLowerCase()}[data-id="${CSS.escape(a.dataset.id)}"]`;
+    else if (a.dataset?.action) key = `[data-action="${CSS.escape(a.dataset.action)}"]`;
+  }
+  el.innerHTML = html; el.__html = html;
+  if (key){
+    const target = el.querySelector(key);
+    if (target && !target.disabled) target.focus({preventScroll:true});
+    else if (key === '#ackBtn') $('runBtn')?.focus({preventScroll:true});
+  }
+  return true;
+}
+function announce(msg){ $('announce').textContent = msg; }
+let toastTimer = null, toastKind = null;
+function toast(msg, kind = null){
+  $('toastText').textContent = msg; $('toast').hidden = false; toastKind = kind;
+  clearTimeout(toastTimer); toastTimer = setTimeout(hideToast, 9000);
+}
+function hideToast(){ clearTimeout(toastTimer); $('toast').hidden = true; toastKind = null; }
+
+// ---------- render
+function render(){
+  renderLive(); renderBanner(); renderSys();
+  if (!state.overview) return;
+  renderLines(); renderStats(); renderRows(); renderDetail();
+  if (state.view !== 'overview') renderView();
+}
+
+// live mode: no reading from any gateway for longer than staleAfterSeconds (3 min)
+// seconds since the last reading, counted on from the moment the status arrived
+const readingAge = s => s?.lastReadingAgeSeconds == null ? null
+  : s.lastReadingAgeSeconds + (state.statusAt ? Math.max(0, (Date.now() - state.statusAt) / 1000) : 0);
+const feedStale = s => s?.mode === 'live' && s.clock != null &&
+  (s.state === 'stale' || (readingAge(s) ?? 0) > (s.staleAfterSeconds ?? 180));
+function ago(seconds){
+  if (seconds == null) return '';
+  if (seconds < 90) return `${Math.max(1, Math.round(seconds))} s`;
+  if (seconds < 5400) return `${Math.round(seconds / 60)} min`;
+  if (seconds < 172800) return `${Math.round(seconds / 3600)} h`;
+  return `${Math.round(seconds / 86400)} days`;
+}
+function renderLive(){
+  const el = $('live'), s = state.overview?.status;
+  el.className = 'live';
+  let text;
+  const age = readingAge(s);
+  if (!state.connected){ el.classList.add('down'); text = `Disconnected${state.lastOk ? ' · last update ' + when(state.lastOk) : ''}`; }
+  else if (s?.mode === 'live' && !s.clock){ el.classList.add('idle'); text = 'Waiting for readings…'; }
+  else if (feedStale(s)){ el.classList.add('warn'); text = `Stale<span class="long"> · no reading for ${ago(age)}</span>`; }
+  else if (s?.mode === 'live'){ el.classList.add('ok'); text = `Live · <span class="long">last reading </span>${ago(age)} ago`; }
+  else if (!s || !s.clock){ el.classList.add('idle'); text = 'Waiting for data…'; }
+  else if (s.state === 'warming_up'){ el.classList.add('idle'); text = `Catching up · ${when(s.clock)}`; }
+  else if (s.state === 'finished' && s.loop){ el.classList.add('idle'); text = `Restarting replay… · ${when(s.clock)}`; }
+  else if (s.state === 'finished'){ el.classList.add('idle'); text = `Replay ended · ${when(s.clock)}`; }
+  else if (s.state === 'error'){ el.classList.add('down'); text = 'Feed error'; }
+  else { el.classList.add('ok'); text = `Live · <span class="long">updated </span>${when(s.clock)}`; }
+  const span = el.querySelector('span');
+  if (span.innerHTML !== text) span.innerHTML = text;
+  el.title = !s ? '' : s.mode === 'live'
+    ? (age == null ? 'Live: waiting for plant gateways to send readings'
+      : `Live: readings pushed by plant gateways every ${s.intervalSeconds} s. Latest reading ${when(s.clock)} (plant time), received ${ago(age)} ago`
+        + (feedStale(s) ? `; stale after ${ago(s.staleAfterSeconds ?? 180)} without a reading` : ''))
+    : `Replaying the July 2026 log files as ${s.intervalSeconds}-second pings at ${s.speed}× speed${s.loop ? ` (pass ${(s.replayCount ?? 0) + 1})` : ''}`;
+}
+// the age in the live indicator moves on every second between polls
+setInterval(() => { if (state.overview?.status?.mode === 'live' && state.connected){ renderLive(); renderBanner(); } }, 1000);
+
+function renderBanner(){
+  const b = $('banner'), down = !state.connected, s = state.overview?.status;
+  const stale = !down && feedStale(s);       // reachable, but the gateways have gone quiet: data shown is old
+  document.body.classList.toggle('stale', down);
+  document.body.classList.toggle('feedstale', stale);
+  b.hidden = !down && !stale;
+  for (const sel of [$('line'), $('period')]){        // a filter change cannot load while disconnected
+    if (sel.disabled !== down){ sel.disabled = down; sel.parentElement.title = down ? 'Reconnect to change filters' : sel.getAttribute('aria-label'); }
+  }
+  if (down){
+    const text = state.overview
+      ? `Connection to the monitor lost. Showing data from ${esc(when(state.lastOk))}; filters and actions are paused. Retrying every ${POLL_MS / 1000} s…`
+      : `Can’t reach the CIP monitor service. Retrying every ${POLL_MS / 1000} s…`;   // never connected: say so instead of an endless skeleton
+    setBanner(b, text);
+  } else if (stale){
+    setBanner(b, `No readings received for ${ago(readingAge(s))} (gateways send one every ${s.intervalSeconds} s). ` +
+      `Showing data up to ${esc(when(s.clock))}; runs in progress may have stopped reporting.`);
+  }
+}
+function setBanner(b, text){
+  const html = `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 1.8 15 14H1z" stroke-linejoin="round"/><path d="M8 6.2v3.6M8 11.6v.2" stroke-linecap="round"/></svg>
+      <span>${text}</span>`;
+  if (b.__html !== html){ b.innerHTML = html; b.__html = html; }
+}
+
+function renderLines(){
+  const sel = $('line'), lines = state.overview.lines;
+  if (sel.options.length - 1 === lines.length) return;
+  sel.innerHTML = '<option value="">Ambala plant · all lines</option>' + lines.map(l => `<option value="${esc(l)}">Line ${esc(l)}</option>`).join('');
+  sel.value = state.line;
+}
+
+// Objects known from the replayed logs (reported or not) and how many have reference thresholds.
+function coverage(){
+  const ov = state.overview, objs = ov.objects;
+  const reported = objs.length, reportedChecked = objs.filter(o => o.statusText !== 'No reference thresholds').length;
+  const conf = ov.configured || {};
+  return {reported, reportedChecked, total: Math.max(conf.objects ?? 0, reported), monitored: conf.monitored ?? reportedChecked};
+}
+function renderStats(){
+  const s = state.overview.summary, el = $('stats'), cov = coverage();
+  const unmon = cov.total > 0 && cov.monitored === 0;       // no thresholds anywhere in this selection: nothing is evaluated
+  const waiting = !unmon && ((cov.monitored > 0 && cov.reportedChecked === 0)   // monitored objects exist but none has reported: zeros would not be results
+    || cov.total === 0);                                                        // live mode before the first reading: no object known yet
+  const dash = v => unmon || waiting ? '–' : v;
+  const stat = (v,k,t) => `<div class="stat" title="${esc(t)}"><div class="v num">${v}</div><div class="k">${k}</div></div>`;
+  const first = unmon ? 'Not monitored' : `Alerts · ${PERIOD_TEXT[state.overview.period] || state.overview.period}`;
+  const nProp = state.overview.objects.reduce((n, o) => n + o.alerts.filter(a => a.proposed).length, 0);
+  swap(el, stat(dash(s.openAlerts), first, unmon ? 'No object in this selection has reference thresholds, so no alerts can be raised'
+      : waiting ? 'No object with reference thresholds has reported yet, so nothing has been checked'
+      : `Alerts raised in the selected period, acknowledged or not${nProp ? `; ${nProp} from proposed temperature, flow and concentration rules (${SIGN_OFF})` : ''}`)
+    + stat(dash(s.unacknowledgedAlerts), 'Unacknowledged', 'Alerts in the period that nobody has acknowledged yet')
+    + stat(cov.total ? `${dash(s.objectsWithAlerts)} <small>of ${cov.total}</small>` : '–', 'Objects with alerts',
+           cov.reported < cov.total ? `Objects with at least one alert in the period; ${cov.reported} of ${cov.total} objects have reported so far` : 'Objects with at least one alert in the period')
+    + stat(s.runsInProgress, 'CIP runs in progress', 'CIP cycles running now'));
+  el.classList.toggle('unmonitored', unmon || waiting);
+  el.classList.remove('skel'); el.removeAttribute('aria-busy');
+}
+
+const ICON_TICK = '<svg viewBox="0 0 14 14" fill="none" stroke="#54AD18" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 7.5 5.6 10.5 11.5 4"/></svg>';
+const ICON_NOREF = '<svg viewBox="0 0 14 14" fill="none" stroke="#9FB0BE" stroke-width="1.4" aria-hidden="true"><circle cx="7" cy="7" r="5.3" stroke-dasharray="2.2 2"/><path d="M4.6 7h4.8" stroke-linecap="round"/></svg>';
+const ICON_RUN = '<span class="run-dot" aria-hidden="true"><i></i></span>';
+
+function reading(p, alert){
+  // -> [class, html, title] for a table cell
+  if (alert.proposed && p.parameter === alert.parameter){       // the reading that met a proposed rule
+    const m = alert.measured || {}, acked = !!alert.acknowledgedAt, v = m.value ?? p.value;
+    return [`val proposed${acked ? ' acked' : ''}`, esc(fmtValue(v, p.unit)),
+      `Below the proposed limit${acked ? ' (acknowledged)' : ''}: ${fmtValue(v, p.unit)} at ${hhmm(alert.raisedAt)}, limit ${fmtValue(m.limit, p.unit)} (${m.limitText}) for ${fmtMin(m.minutes)} min or longer. ${SIGN_OFF}.`];
+  }
+  if (p.parameter === 'Time' && alert.proposed){                // time is context here, not the cause
+    if (p.value == null) return ['val nodata', 'no data', `${label(alert.phase)}: no elapsed time at alert time`];
+    return ['val', esc(fmtValue(p.value, 'min')), `${label(alert.phase)} had run ${fmtValue(p.value, 'min')} when the proposed rule was met${p.limit != null ? ` (time limit ${fmtValue(p.limit, 'min')})` : ''}`];
+  }
+  if (p.parameter === 'Time'){
+    const acked = !!alert.acknowledgedAt;
+    return [`val breach${acked ? ' acked' : ''}`, esc(fmtValue(alert.actualMinutes, 'min')),
+      `Out of limit${acked ? ' (acknowledged)' : ''}: ran ${fmtValue(alert.actualMinutes,'min')}, limit ${fmtValue(alert.limitMinutes,'min')}`];
+  }
+  if (p.status === 'not_applicable') return ['val na', '—', `${p.parameter} is not a TACT parameter in ${label(alert.phase)}`];
+  if (p.status === 'no_data' || p.value == null) return ['val nodata', 'no data', `${p.label}: no reading at alert time`];
+  if (implausible(p)) return ['val suspect', '<i class="bang" aria-hidden="true">!</i>Invalid',
+    `Invalid reading: ${p.label.toLowerCase()} reported ${fmtValue(p.value, p.unit)}, outside the plausible ${rangeText(p)} range. See the data checks.`];
+  const sp = p.set_point != null ? `, set point ${fmtValue(p.set_point, p.unit)}` : '';
+  const pp = p.proposed;
+  const prop = pp && pp.limit != null ? `; ${proposedVerdict(pp)} of ${fmtValue(pp.limit, p.unit)} (${SIGN_OFF})` : '';
+  return ['val', esc(fmtValue(p.value, p.unit)), `${p.label} at alert time${sp} (not evaluated: no approved alert rule for ${p.parameter.toLowerCase()})${prop}`];
+}
+function valueCell(p, alert){
+  if (!p) return '<td></td>';
+  const [cls, html, title] = reading(p, alert);
+  return `<td class="num"><span class="${cls}" title="${esc(title)}">${html}</span></td>`;
+}
+
+function objectCell(o){
+  return `<td><div class="obj" title="${esc(o.objectId)}">${esc(o.code)}</div><div class="sub" title="${esc(o.name || o.line)} · Line ${esc(o.line)}">${esc(o.name || o.line)}</div></td>`;
+}
+
+// The row's cells show `row`; the panel shows `p`. Name the panel's phase when it differs from the row title's
+// and its cycle when that differs, so the badge never pairs the row's title with another alert's cycle.
+// Narrow screens keep only the part that tells the two apart (the rest is in the tooltip).
+function viewingText(p, row){
+  const ph = p.phase !== row.phase, cy = p.cycleNumber !== row.cycleNumber;
+  if (!ph && !cy) return 'Viewing older alert';
+  if (!ph) return `Viewing cycle ${p.cycleNumber}`;
+  return `Viewing ${esc(STEP_LABELS[p.phase] || label(p.phase))}${cy ? `<span class="vx">, cycle ${p.cycleNumber}</span>` : ''}`;
+}
+function alertRow(o, clock){
+  const latest = o.alerts[0], key = o.line + '|' + o.objectId;
+  const inRow = o.alerts.find(a => a.id === state.selectedId);
+  // the panel shows an alert of this object from before the period (opened from 'Other alerts'): keep the row marked
+  const pinnedOld = !inRow && !!state.selectedId && state.selObj === key;
+  const shown = inRow || latest;
+  const sel = !!inRow || pinnedOld;
+  const earlierView = shown !== latest;
+  const t = tactOf(shown);
+  const per = PERIOD_TEXT[state.overview.period] || '';
+  const parts = [];
+  if (pinnedOld){
+    const d = state.detail?.alert.id === state.selectedId ? state.detail.alert : null;
+    parts.push(`<span class="viewing" title="${esc(`The panel shows an alert from before the ${per}${d ? `: ${label(d.phase)}, cycle ${d.cycleNumber}, ${when(d.raisedAt)}` : ''}. This row still shows the latest alert; click it to open that one.`)}">${d ? viewingText(d, latest) : 'Viewing older alert'}</span>`);
+  }
+  else if (earlierView) parts.push(`<span class="viewing" title="${esc(`This row shows the earlier alert open in the panel (${label(shown.phase)}, cycle ${shown.cycleNumber}). Click the row for the latest.`)}">Viewing earlier<span class="vx">, cycle ${shown.cycleNumber}</span></span>`);
+  if (shown.proposed && !pinnedOld && !earlierView) parts.push(ptag('Proposed rule'));   // never presented as approved
+  else if (shown.stepAtRaise && !pinnedOld && !earlierView) parts.push(esc(stepText(shown.stepAtRaise)));   // with the badge the line would wrap
+  parts.push(shown.proposed ? `limit ${esc(fmtValue(shown.measured?.limit, shown.measured?.unit))}` : `limit ${esc(fmtValue(shown.limitMinutes, 'min'))}`);
+  // 'Acknowledged' is said by the grey ring dot and grey Time pill; kept for screen readers and the tooltip only
+  const ackText = shown.acknowledgedAt ? `Acknowledged ${when(shown.acknowledgedAt)}` : '';
+  const n = o.alerts.length - 1;
+  const stillOpen = o.alerts.filter(a => a !== shown && !a.acknowledgedAt).length;
+  let more = '';
+  if (n){   // one badge on the title line for the other alerts in the period; a red dot when some are still open
+    const tip = `${n} other alert${n > 1 ? 's' : ''} on ${o.code} in the ${per}${stillOpen ? `, ${stillOpen} still open` : ''}. Click to list them.`;
+    more = `<span class="more${stillOpen && shown.acknowledgedAt ? ' open' : ''}" title="${esc(tip)}">${stillOpen && shown.acknowledgedAt ? '<i class="dot open" aria-hidden="true"></i>' : ''}+${n}<span class="mw"> ${earlierView || pinnedOld ? 'other' : 'earlier'}</span>`
+      + `<span class="sr-only">${stillOpen ? `, ${stillOpen} still open` : ''}</span></span>`;
+  }
+  const subText = [...parts, ackText].filter(Boolean).join(' · ').replace(/<[^>]+>/g, '');
+  const raised = `<td class="num quiet-t raised" title="Raised ${esc(when(shown.raisedAt))}">${hhmm(shown.raisedAt)}${sameDay(shown.raisedAt, clock) ? '' : `<small>${day(shown.raisedAt)}</small>`}</td>`;
+  const full = shown.proposed
+    ? `${titleOf(shown)}: ${fmtValue(shown.measured?.value, shown.measured?.unit)} against a ${fmtValue(shown.measured?.limit, shown.measured?.unit)} proposed limit${ackText ? ` (${ackText.toLowerCase()})` : ''}. ${SIGN_OFF}.`
+    : `${titleOf(shown)}: ran ${fmtValue(shown.actualMinutes,'min')} against a ${fmtValue(shown.limitMinutes,'min')} limit${ackText ? ` (${ackText.toLowerCase()})` : ''}`;
+  const off = !state.connected ? ' title="Reconnect to open other alerts"' : '';
+  return `<tr class="objrow alertrow${sel ? ' sel' : ''}${pinnedOld ? ' pinned' : ''}" tabindex="0" role="button" aria-pressed="${sel}" data-id="${esc(latest.id)}" data-obj="${esc(key)}"${off}>${objectCell(o)}
+    <td><div class="sevline"><i class="dot ${shown.acknowledgedAt ? 'ack' : 'open'}" aria-hidden="true"></i><span class="alert" title="${esc(full)}">${esc(shortTitleOf(shown))}</span>${more}</div>
+    <div class="sub alert-sub" title="${esc(subText)}"><div class="sis">${parts.map((p, i) => `<span class="si${i === parts.length - 1 ? ' lim' : ''}${p.startsWith('<span class="viewing"') || p.startsWith('<span class="ptag') ? ' vb' : ''}">${p}</span>`).join('')}${ackText ? `<span class="sr-only">${esc(ackText)}</span>` : ''}</div></div></td>
+    ${valueCell(t.Temperature, shown)}${valueCell(t.Action, shown)}${valueCell(t.Concentration, shown)}${valueCell(t.Time, shown)}${raised}</tr>`;
+}
+
+function quietRow(o, hidden){
+  const noref = o.statusText === 'No reference thresholds';
+  const clock = state.overview?.status?.clock;
+  const at = iso => sameDay(iso, clock) ? hhmm(iso) : when(iso);
+  let icon, text, time = '';
+  if (noref){ icon = ICON_NOREF; text = `No reference thresholds · not monitored${o.running ? ' · running' : ''}`; }
+  else if (o.running){ icon = ICON_RUN; text = `Running${o.activity ? ' · ' + label(o.activity) : ''}`; if (o.runStartedAt) time = `started ${at(o.runStartedAt)}`; }
+  else { icon = ICON_TICK; text = o.statusText || 'Last run completed'; if (o.lastReadingAt) time = at(o.lastReadingAt); }
+  const lastSeen = o.lastReadingAt ? ` · last reading ${when(o.lastReadingAt)}` : '';
+  return `<tr class="objrow quiet"${hidden ? ' hidden' : ''}>${objectCell(o)}<td colspan="6"><div class="ok${noref ? ' noref' : ''}" title="${esc(text + lastSeen)}">${icon}<span>${esc(text)}${time ? `<span class="qt">${esc(time)}</span>` : ''}</span></div></td></tr>`;
+}
+
+function renderRows(){
+  const ov = state.overview, objects = ov.objects, clock = ov.status.clock, body = $('rows');
+  body.removeAttribute('aria-busy');
+  if (!objects.length){ swap(body, '<tr><td colspan="7" class="empty">No objects reporting yet. Waiting for the first readings…</td></tr>'); return; }
+  const attention = objects.filter(o => o.alerts.length);
+  // acknowledged objects (every alert in the period acknowledged) move below the open ones under their own divider
+  const openObjs = attention.filter(o => o.alerts.some(a => !a.acknowledgedAt));
+  const ackedObjs = attention.filter(o => !o.alerts.some(a => !a.acknowledgedAt));
+  const unack = openObjs.reduce((n, o) => n + o.alerts.filter(a => !a.acknowledgedAt).length, 0);
+  const unmonitored = objects.filter(o => !o.alerts.length && o.statusText === 'No reference thresholds');
+  const fine = objects.filter(o => !o.alerts.length && o.statusText !== 'No reference thresholds');
+  const showUnmon = state.showUnmonitored ?? !attention.length;
+  const grp = (cls, title, n, extra='') => `<tr class="grp ${cls}"><th colspan="7" scope="colgroup">${title}<span class="cnt">${n}</span>${extra}</th></tr>`;
+  let html = '';
+  // the red count is the 'Unacknowledged' stat, so the two numbers always match
+  if (openObjs.length) html += grp('attn', 'Needs attention', `${unack} unacknowledged`, `<span class="gsub">on ${plural(openObjs.length, 'object')}</span>`)
+    + openObjs.map(o => alertRow(o, clock)).join('');
+  if (ackedObjs.length) html += grp('acked', 'Acknowledged', ackedObjs.length, `<span class="gsub">${ackedObjs.length === 1 ? 'object' : 'objects'} with every alert acknowledged</span>`)
+    + ackedObjs.map(o => alertRow(o, clock)).join('');
+  if (fine.length) html += grp('fine', 'No alerts · running or last run completed', fine.length) + fine.map(o => quietRow(o, false)).join('');
+  if (unmonitored.length) html += grp('unmon', 'Not monitored · no reference thresholds', unmonitored.length,
+      `<button type="button" class="linkbtn" id="toggleUnmon" aria-expanded="${showUnmon}">${showUnmon ? 'Hide' : `Show ${unmonitored.length} object${unmonitored.length > 1 ? 's' : ''}`}</button>`)
+    + unmonitored.map(o => quietRow(o, !showUnmon)).join('');
+  swap(body, html);
+}
+
+function sparkline(trend, p, raisedAt, breach){
+  const pts = (trend?.actual || []).filter(d => d[1] != null);
+  if (pts.length < 2) return '<div class="nospark">Not enough readings for a trend</div>';
+  const W = 170, H = 32, t = iso => Date.parse(iso);
+  const refs = (trend.setPoint || []).filter(d => d[1] != null);
+  const limitY = p.parameter === 'Time' && p.limit != null ? [p.limit] : [];
+  // proposed limit: only where the rule is checked (its step), so it is drawn as separate segments
+  const segs = [];
+  if (p.proposed && trend.proposed) for (const d of trend.proposed.limit || []){
+    if (d[1] == null){ if (segs.length && segs[segs.length - 1].length) segs.push([]); continue; }
+    if (!segs.length) segs.push([]);
+    segs[segs.length - 1].push(d);
+  }
+  const propPts = segs.filter(g => g.length);
+  const all = pts.map(d => d[1]).concat(refs.map(d => d[1]), limitY, propPts.flat().map(d => d[1]));
+  let mn = Math.min(...all), mx = Math.max(...all); if (mx === mn){ mx += 1; mn -= 1; }
+  const t0 = t(pts[0][0]), t1 = Math.max(t(pts[pts.length-1][0]), t0 + 1);
+  const x = iso => ((t(iso) - t0) / (t1 - t0) * W).toFixed(1);
+  const y = v => (H - 3 - ((v - mn) / (mx - mn)) * (H - 6)).toFixed(1);
+  const line = d => d.map(e => `${x(e[0])},${y(e[1])}`).join(' ');
+  const dash = 'stroke="#9FB0BE" stroke-width="1" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"';
+  const raised = raisedAt && t(raisedAt) >= t0 && t(raisedAt) <= t1 ? `<line x1="${x(raisedAt)}" x2="${x(raisedAt)}" y1="0" y2="${H}" stroke="#C8281C" stroke-opacity=".35" stroke-width="1" vector-effect="non-scaling-stroke"/>` : '';
+  const what = (p.parameter === 'Time' ? 'elapsed time against the dashed limit' : refs.length ? 'reading against its dashed set point' : 'reading')
+    + (propPts.length ? ' and the proposed limit (orange, pending Danone sign-off)' : '');
+  const seg = g => g.length === 1 ? `${x(g[0][0])},${y(g[0][1])} ${(+x(g[0][0]) + 2).toFixed(1)},${y(g[0][1])}` : line(g);
+  return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" role="img" aria-label="${esc(p.parameter)} trend during this activity: ${what}">
+    ${raised}
+    ${refs.length ? `<polyline points="${line(refs)}" fill="none" ${dash}/>` : ''}
+    ${limitY.map(v => `<line x1="0" x2="${W}" y1="${y(v)}" y2="${y(v)}" ${dash}/>`).join('')}
+    ${propPts.map(g => `<polyline class="plimit" points="${seg(g)}" fill="none" stroke="${PROPOSED_LINE}" stroke-width="1.3" stroke-dasharray="4 2.5" vector-effect="non-scaling-stroke"/>`).join('')}
+    <polyline points="${line(pts)}" fill="none" stroke="${breach ? '#C8281C' : '#005EB8'}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>`;
+}
+
+function tactCell(p, alert, trend){
+  const isTime = p.parameter === 'Time';
+  const pp = isTime ? null : p.proposed;                  // proposed rule evaluation (pending Danone sign-off)
+  const own = !!alert.proposed && p.parameter === alert.parameter;
+  const timeCause = isTime && !alert.proposed;            // the Time rule raised this alert
+  let status = timeCause ? 'out_of_limit' : p.status;
+  if (!isTime && status === 'not_evaluated' && implausible(p)) status = 'suspect';
+  if (pp && status === 'not_evaluated'){
+    if (own) status = 'p_breach';
+    else if (pp.status === 'outside') status = 'p_outside';
+    else if (pp.status === 'within') status = 'p_within';
+  }
+  const cls = {out_of_limit:'breach', no_data:'nodata', not_applicable:'na', suspect:'suspect', p_breach:'breach pbreach', p_outside:'pout', p_within:'pwithin'}[status] || '';
+  const value = timeCause ? alert.actualMinutes : own ? (alert.measured?.value ?? p.value) : p.value;
+  const d = DECIMALS[p.unit] ?? 1;
+  let read, lim, tip, stHtml = null;
+  if (status === 'no_data'){ read = 'No data'; lim = 'No reading at alert time'; tip = `${p.label}: the sensor sent no value`; }
+  else if (status === 'not_applicable'){ read = `Not used in ${label(alert.phase).toLowerCase()}`; lim = '';
+    tip = `${p.parameter} is not a TACT parameter in ${label(alert.phase).toLowerCase()}, so it is not shown for this alert`; }
+  else if (status === 'suspect'){ read = fmtValue(value, p.unit); lim = `Outside ${rangeText(p)}`;
+    tip = `Invalid reading: ${p.label.toLowerCase()} reported ${fmtValue(value, p.unit)}, outside the plausible ${rangeText(p)} range, so it is not a real deviation. See the data checks.`; }
+  else if (isTime){
+    const tol = p.limit != null && p.set_point ? Math.round(p.limit / p.set_point * 100 - 100) : null;
+    read = fmtValue(value, 'min');
+    lim = p.limit != null ? `Limit ${fmtValue(p.limit, 'min')} · ${fmtMin(p.set_point)} + ${tol}%` : 'No time limit for this activity';
+    tip = p.limit != null ? `${label(alert.phase)} duration${alert.proposed ? ' when the proposed rule was met' : ''}. Limit ${fmtValue(p.limit,'min')} = threshold ${fmtValue(p.set_point,'min')} plus ${tol}% tolerance`
+      : `${label(alert.phase)} has no time threshold in the reference workbook`;
+  } else if (pp && pp.limit != null && status !== 'not_evaluated'){
+    // status slot: a 'Proposed' tag (the verdict is about a proposed limit); verdict and limit on the limit line
+    read = fmtValue(value, p.unit);
+    lim = `${status === 'p_within' ? 'Within' : 'Below'} limit ${fmtValue(pp.limit, p.unit)}`;
+    stHtml = `${ptag('Proposed', `: ${pp.rule}`)}<span class="sr-only">: ${STATUS_TEXT[status].toLowerCase()}</span>`;
+    const sp = p.set_point != null ? ` Set point ${fmtValue(p.set_point, p.unit)}${p.deviation != null ? ` (deviation ${p.deviation >= 0 ? '+' : '−'}${fmt(Math.abs(p.deviation), d)})` : ''}.` : '';
+    const met = pp.metAt && !own ? ` The proposed rule was met at ${hhmm(pp.metAt)} in this activity.` : '';
+    tip = `${STATUS_TEXT[status]}. ${p.label} ${own ? 'when the proposed rule was met' : 'at alert time'}: ${fmtValue(value, p.unit)}, ${own ? 'below the proposed limit' : proposedVerdict(pp)} of ${fmtValue(pp.limit, p.unit)} (${pp.limitText}).${sp}`
+      + ` Proposed rule: ${pp.rule}.${met} ${SIGN_OFF}: not an approved limit.`;
+  } else {
+    read = fmtValue(value, p.unit);
+    const dev = p.deviation != null ? ` · ${p.deviation >= 0 ? '+' : '−'}${fmt(Math.abs(p.deviation), d)}` : '';
+    lim = p.set_point != null ? `SP ${fmtValue(p.set_point, p.unit)}${dev}` : 'No set point';
+    tip = `${p.label} at alert time${p.set_point != null ? `; set point ${fmtValue(p.set_point, p.unit)}${dev ? `, deviation ${dev.slice(3)}` : ''}` : ''}. Not evaluated: no approved alert rule exists for ${p.parameter.toLowerCase()}.`
+      + (pp ? ` Proposed rule (${SIGN_OFF}): ${pp.reason ? pp.reason.toLowerCase() : 'not checked'} at this moment.` : '');
+  }
+  return `<div class="p ${cls}" title="${esc(tip)}"><div class="row"><div class="name">${p.parameter}</div><div class="st">${stHtml ?? STATUS_TEXT[status]}</div></div>
+    <div class="read num">${esc(read)}</div><div class="lim">${esc(lim)}</div>
+    ${sparkline(trend, p, alert.raisedAt, status === 'out_of_limit' || status === 'p_breach')}</div>`;
+}
+
+// Parameters that are not TACT parameters in this activity, as one muted line under the grid (no empty tiles).
+const TACT = ['Temperature','Action','Concentration','Time'];
+function naNote(t, a){
+  const na = TACT.filter(k => k !== 'Time' && t[k]?.status === 'not_applicable');
+  if (!na.length) return '';
+  const names = na.length === 1 ? na[0] : `${na.slice(0, -1).join(', ')} and ${na[na.length - 1].toLowerCase()}`;
+  const tip = `${na.join(', ')}: not a TACT parameter in ${label(a.phase).toLowerCase()}, so not shown for this alert`;
+  return `<p class="na-note" title="${esc(tip)}">${esc(names)} ${na.length === 1 ? 'is' : 'are'} not used in ${esc(label(a.phase).toLowerCase())}.</p>`;
+}
+function emptyPanel(){
+  const ov = state.overview, objs = ov.objects;
+  if (!objs.length) return `<div class="placeholder"><p class="ep-title">Waiting for the first readings…</p><p>Objects appear here as soon as the CIP controllers report.</p></div>`;
+  if (state.selectedId) return `<div class="placeholder"><p>Loading alert…</p></div>`;
+  const total = objs.length, unmon = objs.filter(o => o.statusText === 'No reference thresholds').length;
+  const checked = total - unmon, running = objs.filter(o => o.running).length, cov = coverage();
+  const waiting = !checked && cov.monitored > 0;      // objects with thresholds exist but have not reported yet
+  const where = state.line ? `Line ${esc(state.line)}` : 'Ambala plant';
+  const per = {'24h':'in the last 24 hours','7d':'in the last 7 days','all':'in the replayed data'}[ov.period] || '';
+  const only = objs[0];
+  const msg = checked
+    ? `${checked} of ${total} objects on ${where} were checked against their time limits and none ran over ${per}.${unmon ? ` ${unmon} ${unmon > 1 ? 'have' : 'has'} no reference thresholds and ${unmon > 1 ? 'are' : 'is'} not monitored.` : ''}`
+    : waiting
+      ? `${total} of ${cov.total} objects have reported so far; none of them has reference thresholds yet.`
+    : total === 1
+      ? `${where}’s only object, ${esc(only.code)}${only.name ? ` (${esc(only.name)})` : ''}, has no reference thresholds, so no alerts can be raised.`
+      : `No alert rules apply to ${where}: none of its ${total} objects have reference thresholds, so no alerts can be raised.`;
+  const heading = checked ? 'No alerts in this period' : waiting ? 'Waiting for monitored objects to report' : `${where} isn’t monitored`;
+  const icon = checked
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="#54AD18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+    : waiting   // neutral clock: nothing monitored has reported, so this is not a result
+    ? '<svg viewBox="0 0 24 24" fill="none" stroke="#9FB0BE" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="#9FB0BE" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="9" stroke-dasharray="3 2.6"/><path d="M8 12h8"/></svg>';
+  const actions = [state.line ? '<button type="button" data-action="all-lines">Show all lines</button>' : '',
+                   checked && ov.period !== 'all' ? '<button type="button" data-action="all-data">Show all data</button>' : ''].join('');   // a longer period can't add alerts to an unmonitored line
+  return `<div class="placeholder"><div class="ico" aria-hidden="true">${icon}</div><p class="ep-title">${heading}</p><p>${msg}</p>
+    <div class="health"><div><b>${total}</b><span>Objects</span></div><div><b>${running}</b><span>Running now</span></div>
+    <div${checked ? '' : ' class="muted"'}><b>${checked}</b><span>With time limits</span></div><div><b>${unmon}</b><span>Not monitored</span></div></div>
+    ${actions ? `<div class="ep-actions">${actions}</div>` : ''}</div>`;
+}
+
+// CIP step bar: every step classified from the cycle data, not only the ones before the alert.
+function stepState(name, a, c){
+  if (name === a.phase) return ['now', ' (alert raised here)'];
+  if (!c) return ['', ''];
+  if (c.activities?.some(x => x.activity === name && x.breach)) return ['over', ' (also over its limit)'];
+  const order = c.activityOrder || [], ran = order.includes(name), cur = c.running ? c.currentActivity : null;
+  if (!c.running) return ran ? ['done', ' (done)'] : ['skip', ' (not run in this cycle)'];
+  if (name === cur) return ['cur', ' (running now)'];
+  if (ran) return ['done', ' (done)'];
+  const before = cur && ACTIVITIES.indexOf(name) < ACTIVITIES.indexOf(cur);
+  return before ? ['skip', ' (not run in this cycle)'] : ['', ' (not reached yet)'];
+}
+// Data checks as client-facing text; the two flow range checks are merged into one item.
+function qualityItems(list){
+  const range = {}, out = [];
+  for (const q of list){
+    const [kind, col] = q.issue.split(':');
+    if (kind === 'out_of_range' && col) range[col] = q; else out.push(q.message);
+  }
+  const reads = n => `${n.toLocaleString('en-GB')}\u00A0reading${n === 1 ? '' : 's'}`;
+  const rng = col => { const r = SIGNAL_RANGE[col]; return r ? ` (${fmt(r[0],0)}\u2060–\u2060${fmt(r[1],0)}\u00A0${r[2]})` : ''; };
+  const items = [];
+  if (range['Supply Flow'] && range['Return Flow']){
+    items.push(`Supply flow (${reads(range['Supply Flow'].count)}) and return flow (${reads(range['Return Flow'].count)}) have invalid readings, outside the plausible sensor range${rng('Return Flow')}`);
+    delete range['Supply Flow']; delete range['Return Flow'];
+  }
+  for (const [col, q] of Object.entries(range))
+    items.push(`${SIGNAL_TEXT[col] || col} has ${q.count.toLocaleString('en-GB')}\u00A0invalid ${q.count === 1 ? 'reading' : 'readings'}, outside the plausible sensor range${rng(col)}`);
+  return items.concat(out);
+}
+// The cycle's activity times inline in the panel (shown on tall screens only; same data as Open run).
+function runMini(a, c){
+  if (!c) return '';
+  const rows = c.activities.filter(x => x.ran).map(x => {
+    const running = c.running && x.activity === c.currentActivity;    // not finished: no pass result yet
+    const res = x.breach ? '<span class="res res-breach"><i class="dot open"></i>Over limit</span>'
+      : running ? '<span class="res res-none">Running</span>'
+      : x.limit != null ? `<span class="res res-ok">${ICON_TICK.replace('<svg', '<svg width="13" height="13"')}Within limit</span>`
+      : '<span class="res res-none">No rule</span>';
+    return `<tr${x.activity === a.phase ? ' class="now"' : ''}><td>${esc(x.label)}</td>
+      <td class="r num">${fmtMin(x.minutes) ?? '—'}${x.limit != null ? ` <small>/ ${fmtMin(x.limit)} min${running ? ' so far' : ''}</small>` : ` <small>min${running ? ' so far' : ''}</small>`}</td><td>${res}</td></tr>`;
+  }).join('');
+  return rows ? `<div class="runmini"><h3>This run <span>· ran / alert limit</span></h3><table><tbody>${rows}</tbody></table></div>` : '';
+}
+
+// The alert's audit trail (raised, notifications, acknowledgement), oldest first: who, when, note.
+function trailItem(e){
+  const det = e.details || {}, ch = CHANNEL_TEXT[det.channel] || det.channel || '';
+  let what, extra = '';
+  if (e.event === 'acknowledged'){ what = `Acknowledged by ${e.actor || 'operator'}`; if (det.note) extra = `<q>${esc(det.note)}</q>`; }
+  else if (e.event === 'alert_raised') what = 'Alert raised by the monitor';
+  else if (e.event === 'notification_sent') what = `${ch} message sent`;
+  else if (e.event === 'notification_failed'){ what = `${ch} message failed`;
+    extra = `<div class="tm">${esc(det.error || 'Delivery failed')}${det.attempts ? ` · ${plural(det.attempts, 'attempt')}` : ''}</div>`; }
+  else what = EVENT_TEXT[e.event] || e.event;
+  const at = e.plantTime ? when(e.plantTime) : wallWhen(e.recordedAt);
+  const tip = `Recorded ${wallWhen(e.recordedAt, true)} (your time)${e.plantTime ? `; plant time ${when(e.plantTime)}` : ''}`;
+  return `<li class="t-${EVENT_CLASS[e.event] || 'sys'}"><i class="td" aria-hidden="true"></i><div class="tw"><div class="tt" title="${esc(tip)}"><b>${esc(what)}</b><span>${esc(at)}</span></div>${extra}</div></li>`;
+}
+function trailHtml(d){
+  const h = d.history || [];
+  if (!h.length) return '';
+  return `<div class="hist"><h3>Audit trail <span>· ${plural(h.length, 'entry', 'entries')}</span></h3><ol class="trail">${h.map(trailItem).join('')}</ol></div>`;
+}
+function ackLine(a){
+  if (!a.acknowledgedAt) return '';
+  const tip = `Acknowledged by ${a.acknowledgedBy || 'operator'} at ${when(a.acknowledgedAt)} (plant time)`
+    + (a.acknowledgedAtWall ? `, recorded ${wallWhen(a.acknowledgedAtWall, true)} your time` : '') + (a.acknowledgementNote ? `. Note: ${a.acknowledgementNote}` : '');
+  return `<div class="ackline" id="ackLine" title="${esc(tip)}">${ICON_TICK}<span>Acknowledged by</span><b>${esc(a.acknowledgedBy || 'operator')}</b>`
+    + `<span class="at">· ${esc(when(a.acknowledgedAt))}</span>${a.acknowledgementNote ? `<span class="an">· “${esc(a.acknowledgementNote)}”</span>` : ''}</div>`;
+}
+
+// 'Why it was raised' for an alert of a proposed T/A/C rule (pending Danone sign-off)
+function proposedWhy(a){
+  const m = a.measured || {}, u = m.unit, start = m.streakStart || a.raisedAt;
+  const on = sameDay(start, state.overview?.status?.clock) ? '' : ` on ${day(start)}`;
+  const how = m.condition === 'below_percent_of_set_point' ? `${fmt(m.amount, 0)}% of the ${fmtValue(m.setPoint, u)} set point`
+    : `set point ${fmtValue(m.setPoint, u)} − ${fmt(m.amount, 1, 0)} ${UNITS[u] || u}`;
+  return `${esc(m.signalLabel || a.parameter)} stayed below the proposed limit of <b>${esc(fmtValue(m.limit, u).replace(' ', '\u00A0'))}</b> (${esc(how)}) `
+    + `for <b>${fmtMin(a.actualMinutes)} min</b> during ${esc(label(a.phase).toLowerCase())} ${esc(stepText(m.step || 'Circulation').toLowerCase())}, from <b>${hhmm(start)}</b>${on}; `
+    + `the rule needs ${fmtMin(m.minutes)}\u00A0min.`
+    + `<span class="pnote">${ptag('Proposed rule', ': derived from the July 2026 data, not an approved Danone limit')}${esc(m.ruleId || '')} · pending Danone sign-off</span>`;
+}
+
+function detailHtml(){
+  const d = state.detail;
+  if (!d) return emptyPanel();
+  const a = d.alert, c = d.cycle, t = tactOf(a);
+  const ack = !!a.acknowledgedAt;
+  const tol = Math.round(a.limitMinutes / a.thresholdMinutes * 100 - 100);
+  const steps = ACTIVITIES.map(name => {
+    const [cls, note] = stepState(name, a, c);
+    return `<div class="step ${cls}" title="${esc(ACTIVITY_LABELS[name] + note)}"><div class="bar"></div><div class="l">${STEP_LABELS[name]}</div></div>`;
+  }).join('');
+  const quality = qualityItems(c?.quality || []);
+  const objKey = a.line + '|' + a.objectId;
+  const others = d.otherAlerts || [];
+  // while the replay catches up, newer alerts appear between polls: don't call the auto-selected one 'earlier'
+  const catchingUp = state.overview?.status?.state === 'warming_up' && !state.pinned;
+  const latestOther = !catchingUp && others.length && others[0].raisedAt > a.raisedAt ? others[0] : null;
+  let othersHtml = '';
+  if (others.length){
+    // The row's '+N earlier' counts the selected period; the list covers all the replayed data, so say both.
+    const total = d.otherAlertCount ?? others.length;
+    const period = state.overview?.period || 'all', clock = state.overview?.status?.clock;
+    const since = PERIOD_MS[period] && clock ? Date.parse(clock) - PERIOD_MS[period] : null;
+    const inPeriod = o => since == null || Date.parse(o.raisedAt) >= since;
+    const row = objectRow(a.line, a.objectId);
+    const nPeriod = since == null ? total : row ? row.alerts.filter(x => x.id !== a.id).length : others.filter(inPeriod).length;
+    const scope = since == null ? `<b class="cnt num">${total}</b> in all data`
+      : `${nPeriod ? `<b class="cnt num">${nPeriod}</b>` : 'None'} in the ${PERIOD_TEXT[period]} · ${total} in all data`;
+    const open = state.othersOpenFor === objKey ? ' open' : '';
+    const firstOld = since == null ? -1 : others.findIndex(o => !inPeriod(o));
+    const chipName = o => o.proposed ? `${label(o.phase)} ${PARAM_WORD[o.parameter] || ''}` : label(o.phase);
+    const chip = o => `<li><button type="button" class="chip" data-id="${esc(o.id)}" title="${esc(`${chipName(o)} alert${o.proposed ? ` (${SIGN_OFF})` : ''}, cycle ${o.cycleNumber}, ${o.acknowledgedAt ? 'acknowledged' : 'open'}`)}">
+        <i class="dot ${o.acknowledgedAt ? 'ack' : 'open'}" aria-hidden="true"></i><span>${esc(chipName(o))} · cycle ${o.cycleNumber}</span>${o.proposed ? '<span class="ptag dash">Proposed</span>' : ''}
+        ${o === latestOther ? '<span class="latest">Latest</span>' : ''}<span class="when num">${when(o.raisedAt)}</span><span class="sr-only">${o.acknowledgedAt ? 'acknowledged' : 'open'}</span></button></li>`;
+    const items = others.map((o, i) => (i === firstOld ? `<li class="div" role="presentation">${PERIOD_BEFORE[period]}</li>` : '') + chip(o)).join('');
+    const rest = total - others.length;
+    othersHtml = `<details class="others" id="others"${open}><summary id="othersSum"><span class="ot">Other alerts on ${esc(a.code)}<span class="scope">${scope}</span></span>
+      <svg viewBox="0 0 10 10" fill="none" stroke="#5B616B" stroke-width="1.5" aria-hidden="true"><path d="M1.5 3.5 5 7l3.5-3.5"/></svg></summary>
+      <ul class="olist">${items}</ul>
+      ${rest > 0 ? `<p class="note">and ${rest} older alert${rest > 1 ? 's' : ''} in the replayed data</p>` : ''}</details>`;
+  }
+  const earlier = latestOther ? `<div class="d-earlier">Showing an earlier alert on this object. <button type="button" class="linkbtn" id="latestBtn" data-latest="${esc(latestOther.id)}">Back to latest (${esc(when(latestOther.raisedAt))})</button></div>` : '';
+  const ref = c?.referenceObject || a.referenceObject;
+  const disconnected = !state.connected;
+  const ackTitle = ack ? `Acknowledged by ${a.acknowledgedBy || 'operator'} at ${when(a.acknowledgedAt)}` : disconnected ? 'Reconnect to acknowledge' : 'Mark this alert as seen, with your name and an optional note';
+  return `
+    <div>
+      <div class="d-top"><div class="tag ${ack ? 'ack' : ''}"><i class="dot ${ack ? 'ack' : 'open'}" aria-hidden="true"></i>${ack ? `Acknowledged ${when(a.acknowledgedAt)}` : 'Open'}${a.proposed ? ptag('Proposed rule', ': derived from the July 2026 data, not an approved Danone limit') : ''}</div>
+        <div class="d-obj" title="${esc(a.objectId)} · reference thresholds ${esc(ref)}">${esc(a.code)} · Cycle ${a.cycleNumber}${c?.running ? ' · running' : ''}</div></div>
+      <h2 id="dTitle" tabindex="-1">${esc(titleOf(a))}</h2>${earlier}
+    </div>
+    <div>
+      <div class="why">${a.proposed ? proposedWhy(a) : `${esc(label(a.phase))} ${c?.running && c.currentActivity === a.phase ? 'has run' : 'ran'} for <b>${fmtValue(a.actualMinutes,'min')}</b>, above its ${fmtValue(a.thresholdMinutes,'min')} threshold plus ${tol}% tolerance (<b>${fmtValue(a.limitMinutes,'min')}</b>). The limit was crossed at <b>${hhmm(a.raisedAt)}</b>${sameDay(a.raisedAt, state.overview?.status?.clock) ? '' : ` on ${day(a.raisedAt)}`}${a.stepAtRaise ? ` during ${esc(stepText(a.stepAtRaise).toLowerCase())}` : ''}.`}</div>
+      ${othersHtml}
+    </div>
+    <div><h3>CIP step</h3><div class="steps">${steps}</div></div>
+    <div><h3>TACT parameters <span>· at alert time</span></h3>
+      <div class="tact">${TACT.filter(k => t[k] && t[k].status !== 'not_applicable').map(k => tactCell(t[k], a, d.trends[k])).join('')}</div>${naNote(t, a)}</div>
+    <div><h3>Data checks for this run${quality.length ? ` <span>· ${quality.length}</span>` : ''}</h3>
+      <ol class="checks">${quality.length ? quality.map((q,i) => `<li><span>${i+1}</span>${esc(q)}</li>`).join('') : '<li class="none"><span>✓</span>No data-quality issues found in this run.</li>'}</ol></div>
+    ${trailHtml(d)}
+    ${runMini(a, c)}
+    <div class="btn">
+      ${state.ackError ? `<div class="btn-err" role="alert">${esc(state.ackError)}</div>` : disconnected && !ack ? '<div class="btn-note">Acknowledge is paused while the connection is lost.</div>' : ackLine(a)}
+      <div class="row2">
+        <button type="button" class="pri" id="ackBtn" title="${esc(ackTitle)}" aria-haspopup="dialog" aria-controls="ackPop" aria-expanded="${!ack && state.ackOpen}" ${ack || disconnected ? 'disabled' : ''}>${ack ? 'Acknowledged' : 'Acknowledge'}</button>
+        <button type="button" class="sec" id="runBtn" aria-haspopup="dialog">Open run</button>
+      </div>
+    </div>`;
+}
+
+function renderDetail(){
+  const el = $('detail');
+  if (state.ackOpen && (!state.detail || state.detail.alert.id !== ackFor || state.detail.alert.acknowledgedAt || state.view !== 'overview'))
+    closeAckPop();          // another alert was opened, or someone else acknowledged this one
+  el.removeAttribute('aria-busy');
+  el.classList.toggle('busy', !!state.detail && state.detail.alert.id !== state.selectedId);
+  const id = state.detail?.alert.id || null;
+  if (!swap(el, detailHtml())) return updateBtnShadow();
+  if (el.__alertId !== id){
+    el.scrollTop = 0;
+    if (id) announce(`Showing ${titleOf(state.detail.alert)} on ${state.detail.alert.code}`);
+    el.__alertId = id;
+  }
+  if (state.focusAfterRender && id && id === state.selectedId){
+    state.focusAfterRender = false;
+    (el.querySelector('#latestBtn') || $('dTitle'))?.focus({preventScroll:true});
+  }
+  if (state.scrollToOthers && id && state.othersOpenFor === state.detail.alert.line + '|' + state.detail.alert.objectId){
+    state.scrollToOthers = false; $('others')?.scrollIntoView({block:'nearest', behavior:'smooth'});
+  }
+  updateBtnShadow(); placeAckPop();
+}
+function updateBtnShadow(){
+  const el = $('detail'), b = el.querySelector('.btn');
+  if (b) b.classList.toggle('floating', el.scrollHeight - el.scrollTop - el.clientHeight > 2);
+}
+
+function runTolerance(c, fallback){
+  const x = c.activities.find(v => v.threshold && v.limit != null);
+  return Math.round(((x ? x.limit / x.threshold : fallback) - 1) * 100);
+}
+// o: {code, name}; c: the run (activities, flows, ...); alerts: the run's alerts (run history only)
+function runDialogHtml(o, c, tol, alerts = null){
+  const res = (cls, text, dot='') => `<span class="res ${cls}">${dot}${text}</span>`;
+  const rows = c.activities.filter(x => x.ran).map(x => `<tr><td>${esc(x.label)}</td><td class="num r">${fmtMin(x.minutes) ?? '—'}</td>
+    <td class="num r">${x.threshold != null ? fmtMin(x.threshold) : '—'}</td><td class="num r">${x.limit != null ? fmtMin(x.limit) : '—'}</td>
+    <td>${x.breach ? res('res-breach', 'Over limit', '<i class="dot open"></i>') : x.threshold != null ? res('res-ok', 'Within limit', ICON_TICK.replace('<svg', '<svg width="13" height="13"')) : res('res-none', 'No rule')}</td></tr>`).join('');
+  const flowVal = v => v == null ? 'no data' : fmtValue(v, 'L/hr');
+  const flows = c.flows.map(f => `<tr><td>${esc(f.flow)} flow</td><td class="num r">${flowVal(f.medianActual)}</td>
+    <td class="num r">${f.reference != null ? fmtValue(f.reference,'L/hr') : '—'}</td>
+    <td>${f.reference == null ? res('res-none', 'No reference') : f.belowReference ? res('res-warn', 'Below reference', '<i class="dot"></i>') : res('res-ok', 'Within reference')}</td></tr>`).join('');
+  const [scls, stext] = CYCLE_STATUS[c.status] || ['muted', c.status];
+  const sep = '<span class="sep">·</span>';
+  let alertsHtml = '';
+  if (alerts){
+    const missing = Math.max(0, (c.alertCount ?? 0) + alerts.filter(x => x.proposed).length - alerts.length);
+    const items = alerts.map(x => `<li><i class="dot ${x.acknowledgedAt ? 'ack' : 'open'}" aria-hidden="true"></i><span>${esc(titleOf(x))}</span>${x.proposed ? ptag('Proposed rule') : ''}
+        <span class="when num">${esc(when(x.raisedAt))}${x.acknowledgedAt ? ` · acknowledged${x.acknowledgedBy ? ' by ' + esc(x.acknowledgedBy) : ''}` : ' · open'}</span>
+        <button type="button" class="linkbtn" data-open-alert="${esc(x.id)}" data-raised="${esc(x.raisedAt)}">Open alert</button></li>`).join('');
+    if (items || missing) alertsHtml = `<section><h3>Alerts in this run</h3>${items ? `<ul class="alist">${items}</ul>` : ''}
+      ${missing ? `<div class="note">${plural(missing, 'alert was', 'alerts were')} raised before the monitor last restarted: ${missing === 1 ? 'it is' : 'they are'} in the audit log.</div>` : ''}</section>`;
+  }
+  return `
+    <header><div><h2 id="runTitle" tabindex="-1" autofocus>${esc(o.code)}${o.name ? ` · ${esc(o.name)}` : ''}<span class="hs"> · </span><span class="cyc">Cycle ${c.cycleNumber}</span></h2>
+      <div class="meta"><span class="pill ${scls}">${esc(stext)}</span><span>${when(c.start)} – ${c.end ? when(c.end) : 'running'}</span>${sep}<span>${c.recordCount} readings</span>${sep}<span>${c.recipes ? `Recipe: ${esc(c.recipes)}` : 'No recipe recorded'}</span></div>
+      <div class="meta"><span title="${esc(c.referenceObject ? `Reference thresholds: ${c.referenceObject}` : 'No reference thresholds')}">${c.referenceObject ? `Alert when an activity runs more than ${tol}% over its reference threshold` : 'No reference thresholds for this object: activity times are not checked'}</span></div></div>
+      <button type="button" class="close" id="closeRun" aria-label="Close">×</button></header>
+    ${alertsHtml}
+    <section><h3>Activity times <span>· minutes</span></h3>
+      <table><thead><tr><th>Activity</th><th class="r">Ran</th><th class="r">Threshold</th><th class="r">Alert limit</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table></section>
+    <section><h3>Flow <span>· monitoring only, never raises an alert</span></h3>
+      <table><thead><tr><th>Signal</th><th class="r">Median over cycle</th><th class="r">Reference</th><th>Result <span class="sr-only">(flagged below ${100 - Math.round(c.flowTolerance*100)}% of reference)</span><span aria-hidden="true" style="font-weight:400">· flagged below ${100 - Math.round(c.flowTolerance*100)}% of reference</span></th></tr></thead><tbody>${flows}</tbody></table>
+      <div class="note">Medians include readings while the pump was off, so they can read lower than the true flow.</div></section>`;
+}
+let runReturn = null;      // where focus goes when the run dialog closes
+function showRun(html, ret){
+  runReturn = ret;
+  $('runBody').innerHTML = html;
+  $('run').showModal();
+  $('runTitle').focus();          // start on the heading, not on ×, so no stray focus ring when opened by mouse
+}
+function renderRun(){
+  const d = state.detail; if (!d?.cycle) return;
+  const a = d.alert;
+  showRun(runDialogHtml(a, d.cycle, runTolerance(d.cycle, a.proposed ? 1.1 : a.limitMinutes / a.thresholdMinutes)), () => $('runBtn'));
+}
+
+// ---------- acknowledge: name (remembered in this browser, editable) and an optional note, in a popover above the button
+const NAME_KEY = 'cip.operatorName';
+function savedName(){ try { return (localStorage.getItem(NAME_KEY) || '').trim(); } catch { return ''; } }
+function saveName(v){ try { localStorage.setItem(NAME_KEY, v); } catch {} }
+let ackFor = null, editingName = false;
+function apError(msg){ $('apErr').textContent = msg || ''; $('apErr').hidden = !msg; placeAckPop(); }
+function syncWho(){ $('apWho').hidden = editingName; $('apNameField').hidden = !editingName; }
+function apCount(){ $('apCount').textContent = `${$('apNote').value.length} / 280`; }
+function openAckPop(){
+  const d = state.detail;
+  if (!d || d.alert.acknowledgedAt || !state.connected) return;
+  hideSysPop();
+  ackFor = d.alert.id; state.ackOpen = true; state.ackError = null;
+  const name = savedName(); editingName = !name;
+  $('apObj').textContent = `${d.alert.code} · ${shortTitleOf(d.alert)}`;
+  $('apName').value = name; $('apWhoName').textContent = name; $('apName').removeAttribute('aria-invalid');
+  $('apNote').value = ''; apCount(); apError(null);
+  $('apOk').disabled = false; $('apOk').textContent = 'Acknowledge';
+  syncWho();
+  $('ackPop').hidden = false;
+  $('detail').__html = null; renderDetail();          // aria-expanded on the button
+  placeAckPop();
+  (editingName ? $('apName') : $('apNote')).focus({preventScroll:true});
+}
+function closeAckPop(focusBtn = false){
+  if (!state.ackOpen && $('ackPop').hidden) return;
+  state.ackOpen = false; ackFor = null; $('ackPop').hidden = true;
+  $('detail').__html = null; renderDetail();
+  if (focusBtn) $('ackBtn')?.focus({preventScroll:true});
+}
+function placeAckPop(){
+  const pop = $('ackPop');
+  if (pop.hidden) return;
+  const row = document.querySelector('#detail .btn .row2'), btn = $('ackBtn');
+  if (!row || !btn) return;
+  const r = row.getBoundingClientRect(), b = btn.getBoundingClientRect();
+  const w = Math.round(Math.min(400, Math.max(300, r.width)));
+  const left = Math.round(Math.max(12, Math.min(r.left, innerWidth - w - 12)));
+  pop.style.width = w + 'px'; pop.style.left = left + 'px';
+  pop.style.bottom = Math.round(innerHeight - r.top + 12) + 'px';
+  pop.style.setProperty('--arrow-x', Math.round(Math.max(16, Math.min(w - 28, b.left + b.width / 2 - left - 6))) + 'px');
+}
+$('apNote').addEventListener('input', apCount);
+$('apNote').addEventListener('keydown', e => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)){ e.preventDefault(); $('ackForm').requestSubmit(); } });
+$('apName').addEventListener('input', () => { $('apName').removeAttribute('aria-invalid'); if (!$('apErr').hidden) apError(null); });
+$('apChange').addEventListener('click', () => { editingName = true; syncWho(); placeAckPop(); $('apName').focus(); $('apName').select(); });
+$('apCancel').addEventListener('click', () => closeAckPop(true));
+$('ackPop').addEventListener('keydown', e => { if (e.key === 'Escape'){ e.preventDefault(); closeAckPop(true); } });
+document.addEventListener('pointerdown', e => {
+  if (state.ackOpen && !$('ackPop').contains(e.target) && !e.target.closest('#ackBtn')) closeAckPop();
+  if (!$('sysPop').hidden && !$('sysPop').contains(e.target) && !e.target.closest('#sysBtn')) hideSysPop();
+});
+$('ackForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  if (state.acking || !ackFor) return;
+  const name = (editingName ? $('apName').value : savedName()).trim();
+  if (!name){
+    $('apName').setAttribute('aria-invalid', 'true');
+    apError('Enter your name: it is stored with the acknowledgement in the audit log.'); $('apName').focus(); return;
+  }
+  const note = $('apNote').value.trim(), id = ackFor;
+  state.acking = true; $('apOk').disabled = true; $('apOk').textContent = 'Saving…'; apError(null);
+  try {
+    const updated = await api(`/api/alerts/${encodeURIComponent(id)}/acknowledge`, {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(note ? {by: name, note} : {by: name})});
+    saveName(name);
+    if (state.detail?.alert.id === updated.id) state.detail = {...state.detail, alert: {...state.detail.alert, ...updated}};
+    // show it in the table and summary at once; the refresh below brings the server's own numbers
+    const row = state.overview?.objects.flatMap(o => o.alerts).find(x => x.id === updated.id);
+    if (row && !row.acknowledgedAt){
+      Object.assign(row, {acknowledgedAt: updated.acknowledgedAt, acknowledgedBy: updated.acknowledgedBy,
+        acknowledgedAtWall: updated.acknowledgedAtWall, acknowledgementNote: updated.acknowledgementNote});
+      if (state.overview.summary.unacknowledgedAlerts > 0) state.overview.summary.unacknowledgedAlerts--;
+    }
+    state.acking = false;
+    closeAckPop();
+    $('runBtn')?.focus({preventScroll:true});
+    announce(`Alert acknowledged on ${state.detail?.alert.code || ''} by ${name}`);
+    render(); refresh();
+  } catch (err) {
+    state.acking = false; $('apOk').disabled = false; $('apOk').textContent = 'Acknowledge';
+    apError(err.status === 400 && err.detail ? `Could not acknowledge: ${err.detail}.`
+      : err.status ? `Could not acknowledge (server replied ${err.status}). Try again.` : 'Could not acknowledge: the connection was lost. Try again when it is back.');
+  }
+});
+
+// ---------- system status: data source, storage, notifications, proposed rules (read-only; set in the deployment)
+function sysSummary(s){
+  const n = s.notifications || {}, ch = n.channels || {};
+  const names = [ch.teams?.configured && 'Teams', ch.email?.configured && 'email'].filter(Boolean).join(' and ');
+  const failed = (ch.teams?.failed || 0) + (ch.email?.failed || 0) + (n.configErrors?.length || 0);
+  const text = !n.enabled ? 'Notifications off' : !n.active ? `Notifications set up (${names}), paused during the replay` : `Notifications on (${names})`;
+  return {text: failed ? `${text}; ${plural(failed, 'problem')}` : text, cls: failed ? 'warn' : n.active ? 'on' : ''};
+}
+function sysHtml(s){
+  const n = s.notifications || {}, ch = n.channels || {}, pr = s.proposedRules || {};
+  const chan = (key, name) => {
+    const c = ch[key] || {};
+    const count = !c.configured ? 'Not set up' : `${c.sent.toLocaleString('en-GB')} sent${c.failed ? ` · ${c.failed} failed` : ''}`;
+    const who = key === 'email' && c.recipients ? ` · ${plural(c.recipients, 'recipient')}` : '';
+    return `<div class="ch ${c.configured ? (c.failed ? 'bad' : 'on') : ''}" title="${esc(c.lastError ? 'Last error: ' + c.lastError : '')}"><i aria-hidden="true"></i><span>${name}${who}</span><span class="n">${count}</span></div>`;
+  };
+  const note = !n.enabled ? 'No channel set up. An administrator can add a Teams webhook or an email server.'
+    : !n.active ? 'Not sent while the log files are replayed.'
+    : `New alerts raised while live${n.lines ? ` on ${n.lines.join(', ')}` : ''}; at most one message per object every ${ago(n.minIntervalSeconds)}.`;
+  const source = s.mode === 'live' ? `Live readings from plant gateways${s.ingestAuth ? '' : ' (no access token set)'}`
+    : `Replay of the July 2026 logs at ${fmt(s.speed, 0)}× speed${s.loop ? ', in a loop' : ''}`;
+  const prText = {show:'Shown in the alert panel only', alert:'Raise alerts (trial)', off:'Off'}[pr.mode] || pr.mode || '—';
+  return `<h4 id="sysPopTitle">System status</h4><div class="sp-sub">Set on the server by the administrator.</div><dl>
+    <dt>Data</dt><dd>${esc(source)}</dd>
+    <dt>Notifications</dt><dd>${chan('teams', 'Microsoft Teams')}${chan('email', 'Email')}<small>${esc(note)}</small></dd>
+    <dt>Saved data</dt><dd>${s.store?.persistent ? 'Kept in the monitor’s database' : '<span style="color:var(--warning-text);font-weight:600">In memory only</span>'}<small>Acknowledgements, audit log and run history${s.store?.persistent ? ' survive a restart' : ' are lost on restart'}</small></dd>
+    <dt>Proposed rules</dt><dd>${esc(prText)}${pr.mode && pr.mode !== 'off' ? `<small>${pr.rules} temperature, flow and concentration rules · ${esc(pr.signOff || SIGN_OFF)}</small>` : ''}</dd></dl>`;
+}
+function renderSys(){
+  const s = state.overview?.status;
+  if (!s) return;
+  const sum = sysSummary(s);
+  $('sysDot').className = 'sd' + (sum.cls ? ' ' + sum.cls : '');
+  $('sysBtn').title = `System status · ${sum.text}`;
+  $('sysSr').textContent = `System status: ${sum.text}`;
+  if (!$('sysPop').hidden) swap($('sysPop'), sysHtml(s));
+}
+function placeSysPop(){
+  const b = $('sysBtn').getBoundingClientRect(), pop = $('sysPop');
+  pop.style.top = Math.round(b.bottom + 10) + 'px';
+  pop.style.right = Math.round(Math.max(12, innerWidth - b.right - 4)) + 'px';
+}
+function hideSysPop(focus = false){
+  if ($('sysPop').hidden) return;
+  $('sysPop').hidden = true; $('sysBtn').setAttribute('aria-expanded', 'false');
+  if (focus) $('sysBtn').focus();
+}
+$('sysBtn').addEventListener('click', () => {
+  if (!$('sysPop').hidden) return hideSysPop();
+  const s = state.overview?.status; if (!s) return;
+  closeAckPop();
+  $('sysPop').hidden = false; $('sysBtn').setAttribute('aria-expanded', 'true');
+  $('sysPop').__html = null; swap($('sysPop'), sysHtml(s)); placeSysPop();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('sysPop').hidden) hideSysPop(true); });
+window.addEventListener('resize', () => { placeAckPop(); if (!$('sysPop').hidden) placeSysPop(); });
+window.addEventListener('scroll', placeAckPop, {passive:true});
+
+// ---------- views: Overview, Run history (#runs) and Audit log (#audit)
+const VIEW_TITLES = {overview:'Overview', runs:'Run history', audit:'Audit log'};
+const VIEW_POLL = {runs:6000, audit:4000};
+const routeView = () => ({'#runs':'runs', '#audit':'audit'}[location.hash] || 'overview');
+let viewTimer = null, viewGen = 0;
+function applyView(focus = false){
+  const v = routeView(), changed = v !== state.view;
+  state.view = v;
+  $('viewOverview').hidden = v !== 'overview'; $('viewRuns').hidden = v !== 'runs'; $('viewAudit').hidden = v !== 'audit';
+  for (const a of document.querySelectorAll('.nav a[data-view]')){
+    if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+  }
+  $('periodWrap').hidden = v === 'audit';          // the audit log is not cut by period: it is the full record
+  document.body.classList.toggle('in-view', v !== 'overview');
+  document.title = `CIP Monitor · ${VIEW_TITLES[v]}`;
+  if (v !== 'overview'){ closeAckPop(); loadView(); } else clearTimeout(viewTimer);
+  if (changed && focus) (v === 'runs' ? $('runsH') : v === 'audit' ? $('auditH') : null)?.focus({preventScroll:true});
+}
+async function loadView(){
+  clearTimeout(viewTimer);
+  const v = state.view;
+  if (v === 'overview') return;
+  const gen = ++viewGen;
+  try {
+    if (v === 'runs'){
+      const q = new URLSearchParams({period: state.period, limit: '1000', summary: '0'});
+      if (state.line) q.set('line', state.line);
+      if (state.runObj) q.set('object', state.runObj);
+      const data = await api(`/api/runs?${q}`);
+      if (gen !== viewGen) return;
+      state.runs = data;
+    } else {
+      const q = new URLSearchParams({limit: String(state.auditLimit), facets: '1'});
+      if (state.line) q.set('line', state.line);
+      if (state.audObj) q.set('object', state.audObj);
+      if (state.audType) q.set('event', state.audType);
+      const data = await api(`/api/audit?${q}`);
+      if (gen !== viewGen) return;
+      state.audit = data;
+    }
+    state.viewError = null;
+  } catch (err) {
+    if (gen !== viewGen) return;
+    state.viewError = err;
+  }
+  renderView();
+  viewTimer = setTimeout(loadView, VIEW_POLL[v]);
+}
+function renderView(){ if (state.view === 'runs') renderRuns(); else if (state.view === 'audit') renderAudit(); }
+function splitObject(id){
+  const m = /^\s*([A-Za-z0-9_]+)\s*-\s*(.+?)\s*$/.exec(id || '');
+  return m ? [m[1], m[2]] : [id || '', ''];
+}
+function objectOptions(sel, objs, current){
+  const list = objs.filter(o => !state.line || o.line === state.line)
+    .map(o => ({value:o.objectId, text:`${splitObject(o.objectId)[0]} · ${splitObject(o.objectId)[1] || o.line}`}))
+    .filter((o, i, a) => a.findIndex(x => x.value === o.value) === i).sort((a, b) => a.text.localeCompare(b.text));
+  if (current && !list.some(o => o.value === current)) list.unshift({value:current, text:splitObject(current).join(' · ')});
+  const html = '<option value="">All objects</option>' + list.map(o => `<option value="${esc(o.value)}">${esc(o.text)}</option>`).join('');
+  if (sel.__html !== html){ sel.innerHTML = html; sel.__html = html; }
+  sel.value = current;
+}
+function objCell(objectId, line){
+  if (!objectId) return '<td class="muted">—</td>';
+  const [code, name] = splitObject(objectId);
+  return `<td><div class="obj" title="${esc(objectId)}">${esc(code)}</div><small class="s" title="${esc(name || line || '')} · Line ${esc(line || '')}">${esc(name || line || '')}${name && line ? ` · ${esc(line)}` : ''}</small></td>`;
+}
+function viewError(){
+  const e = state.viewError;
+  return e ? (e.status ? `Could not load (server replied ${e.status}). Retrying…` : 'Can’t reach the monitor. Retrying…') : null;
+}
+
+// Run history
+function runActivities(r){
+  const ran = r.activities.filter(x => x.ran), over = ran.filter(x => x.breach);
+  const bars = r.activities.map(x => `<i class="${!x.ran ? 'skip' : x.breach ? 'over' : x.limit != null ? 'ok' : 'norule'}"></i>`).join('');
+  const tip = ran.map(x => `${x.label}: ${fmtMin(x.minutes) ?? '—'} min${x.limit != null ? `, limit ${fmtMin(x.limit)} min` : ', no time limit'}${x.breach ? ' (over limit)' : ''}`).join('\n');
+  let text, cls;
+  if (over.length){
+    const w = over.reduce((m, x) => (x.minutes - x.limit) > (m.minutes - m.limit) ? x : m);
+    text = `${w.label} ran ${fmtMin(w.minutes)} min · limit ${fmtMin(w.limit)}${over.length > 1 ? ` · +${over.length - 1} more` : ''}`; cls = 'over';
+  } else if (ran.some(x => x.limit != null)){ text = 'Every activity within its time limit'; cls = 'ok'; }
+  else { text = r.referenceObject ? 'No time limits for these activities' : 'No reference thresholds'; cls = 'none'; }
+  return `<td title="${esc(tip)}"><div class="msteps" aria-hidden="true">${bars}</div><div class="mres ${cls}">${esc(text)}</div></td>`;
+}
+function runAlerts(r){
+  const n = r.alertCount + r.alerts.filter(a => a.proposed).length;
+  if (!n) return '<td><span class="acnt zero">None</span></td>';
+  const open = r.alerts.filter(a => !a.acknowledgedAt).length, prop = r.alerts.filter(a => a.proposed).length;
+  const tip = r.alerts.length ? r.alerts.map(a => `${titleOf(a)}${a.proposed ? ' (proposed rule)' : ''}: ${a.acknowledgedAt ? 'acknowledged' : 'open'}`).join('\n')
+    : 'Raised before the monitor last restarted; see the audit log';
+  return `<td title="${esc(tip)}"><span class="acnt"><i class="dot ${open ? 'open' : 'ack'}" aria-hidden="true"></i>${plural(n, 'alert')}</span>`
+    + `<small class="s">${r.alerts.length ? (open ? `${open} open` : 'All acknowledged') : 'Before restart'}${prop ? ` · ${prop} proposed` : ''}</small></td>`;
+}
+function runRow(r){
+  const [cls, text] = CYCLE_STATUS[r.status] || ['muted', r.status || '—'];
+  const key = `${r.line}|${r.objectId}|${r.cycleNumber}|${r.start}`;
+  return `<tr class="click" tabindex="0" role="button" data-key="${esc(key)}" aria-label="${esc(`${splitObject(r.objectId)[0]} cycle ${r.cycleNumber}, ${text}. Open run details`)}">${objCell(r.objectId, r.line)}
+    <td><div>Cycle ${r.cycleNumber}</div><small class="s" title="${esc(r.recipes || '')}">${r.recipes ? esc(r.recipes) : 'No recipe recorded'}</small></td>
+    <td class="t">${esc(when(r.end))}<small>started ${esc(sameDay(r.start, r.end) ? hhmm(r.start) : when(r.start))}</small></td>
+    <td class="t">${r.durationMinutes != null ? `${fmtMin(r.durationMinutes)} min` : '—'}<small>${plural(r.recordCount, 'reading')}</small></td>
+    ${runActivities(r)}${runAlerts(r)}<td><span class="pill ${cls}">${esc(text)}</span></td></tr>`;
+}
+function renderRuns(){
+  objectOptions($('runObj'), state.overview?.objects || [], state.runObj);
+  $('runStatus').value = state.runStatus;
+  const d = state.runs, err = viewError();
+  if (!d){ swap($('runRows'), `<tr><td colspan="7" class="empty">${esc(err || 'Loading run history…')}</td></tr>`); return; }
+  const all = d.runs, shown = all.filter(r => !state.runStatus || r.status === state.runStatus);
+  const per = PERIOD_TEXT[state.period] || '';
+  const count = st => all.filter(r => r.status === st).length;
+  const stat = (v, k, t) => `<div class="stat" title="${esc(t)}"><div class="v num">${v.toLocaleString('en-GB')}</div><div class="k">${k}</div></div>`;
+  swap($('runStats'), stat(all.length, `Runs closed · ${per}`, 'CIP runs that finished in the selected period' + (all.length >= 1000 ? ' (the latest 1,000)' : ''))
+    + stat(count('ALERT'), 'With an alert', 'Runs where at least one activity ran over its time limit')
+    + stat(count('OK'), 'Within time limits', 'Runs whose checked activities all finished within their limits')
+    + stat(count('NO REFERENCE'), 'Not monitored', 'Runs of objects without reference thresholds: nothing is checked'));
+  $('runCount').textContent = err || (shown.length === all.length ? plural(all.length, 'run') : `${plural(shown.length, 'run')} of ${all.length.toLocaleString('en-GB')}`);
+  const rows = shown.slice(0, state.runsShown).map(runRow).join('');
+  swap($('runRows'), rows || `<tr><td colspan="7" class="empty">${all.length ? 'No run with this status in the selection.' : `No CIP run finished in the ${per}${state.runObj ? ' on this object' : ''}.`}</td></tr>`);
+  $('runMore').hidden = shown.length <= state.runsShown;
+  $('runMoreBtn').textContent = `Show ${Math.min(100, shown.length - state.runsShown)} more runs`;
+}
+function openRunFromHistory(key){
+  const r = state.runs?.runs.find(x => `${x.line}|${x.objectId}|${x.cycleNumber}|${x.start}` === key);
+  if (!r) return;
+  const [code, name] = splitObject(r.objectId);
+  const c = {...r, alertCount: r.alertCount, running: false};
+  showRun(runDialogHtml({code, name}, c, runTolerance(c, 1 + (r.durationTolerance ?? 0.1)), r.alerts),
+    () => document.querySelector(`#runRows tr[data-key="${CSS.escape(key)}"]`));
+}
+$('runRows').addEventListener('click', e => { const tr = e.target.closest('tr.click'); if (tr) openRunFromHistory(tr.dataset.key); });
+$('runRows').addEventListener('keydown', e => {
+  const tr = e.target.closest('tr.click');
+  if (tr && e.target === tr && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openRunFromHistory(tr.dataset.key); }
+  if (tr && (e.key === 'ArrowDown' || e.key === 'ArrowUp')){
+    const next = e.key === 'ArrowDown' ? tr.nextElementSibling : tr.previousElementSibling;
+    if (next?.matches('tr.click')){ e.preventDefault(); next.focus(); }
+  }
+});
+$('runObj').addEventListener('change', e => { state.runObj = e.target.value; state.runsShown = 100; state.runs = null; renderRuns(); loadView(); });
+$('runStatus').addEventListener('change', e => { state.runStatus = e.target.value; state.runsShown = 100; renderRuns(); });
+$('runMoreBtn').addEventListener('click', () => { state.runsShown += 100; renderRuns(); });
+
+// Audit log
+function auditAlert(e){
+  const det = e.details || {};
+  if (!e.alertId) return '<td class="muted">—</td>';
+  const name = det.phase ? `${label(det.phase)}${det.proposed && det.parameter ? ' ' + (PARAM_WORD[det.parameter] || det.parameter) : ''}` : e.alertId.split(':').slice(-1)[0];
+  const text = `${name}${det.cycleNumber != null ? ` · cycle ${det.cycleNumber}` : ''}`;
+  return `<td><button type="button" class="alink" data-open-alert="${esc(e.alertId)}" data-raised="${esc(e.alertRaisedAt || '')}" title="${esc(`Open this alert in the overview (raised ${when(e.alertRaisedAt)})`)}">${esc(text)}</button></td>`;
+}
+function auditDetails(e){
+  const d = e.details || {}, unit = d.unit;
+  switch (e.event){
+    case 'acknowledged': return d.note ? `<q>${esc(d.note)}</q>` : '<span class="muted">No note</span>';
+    case 'alert_raised':
+      if (d.proposed) return `<span class="nw">${esc(fmtValue(d.value, unit) ?? '—')}</span> · <span class="nw">proposed limit ${esc(fmtValue(d.limit, unit) ?? '—')}</span> ${ptag('Proposed')}`;
+      return `${d.actualMinutes != null ? `<span class="nw">${esc(fmtMin(d.actualMinutes))} min when raised</span> · ` : ''}<span class="nw">limit ${esc(fmtMin(d.limitMinutes) ?? '—')} min</span>`;
+    case 'notification_sent': return `${esc(CHANNEL_TEXT[d.channel] || d.channel || '')}${d.attempts > 1 ? ` · ${plural(d.attempts, 'attempt')}` : ''}`;
+    case 'notification_failed': return `${esc(CHANNEL_TEXT[d.channel] || d.channel || '')} · ${esc(d.error || 'failed')}${d.attempts ? ` · ${plural(d.attempts, 'attempt')}` : ''}`;
+    case 'service_started': return `${d.mode === 'live' ? 'Live mode' : 'Replay mode'} · ${d.persistent === false ? 'in memory only' : 'database'}`;
+    case 'replay_restarted': return d.pass ? `Pass ${d.pass}` : '';
+    default: return esc(Object.entries(d).map(([k, v]) => `${k}: ${v}`).join(', '));
+  }
+}
+const ACTOR_TEXT = {monitor:'Monitor', system:'System', notifier:'Notifier'};
+function auditRow(e){
+  const d = e.details || {}, sysActor = ACTOR_TEXT[e.actor];
+  return `<tr><td class="t" title="${esc(`${wallWhen(e.recordedAt, true)} (your time) · ${e.recordedAt}`)}">${esc(wallWhen(e.recordedAt))}<small>#${e.seq}</small></td>
+    <td class="t">${e.plantTime ? esc(when(e.plantTime)) : '<span class="muted">—</span>'}</td>
+    <td><span class="ev ${EVENT_CLASS[e.event] || 'sys'}">${esc(EVENT_TEXT[e.event] || e.event)}</span>${d.proposed && e.event !== 'alert_raised' ? ' ' + ptag('Proposed') : ''}</td>
+    ${objCell(e.objectId, e.line)}${auditAlert(e)}
+    <td class="clip${sysActor ? ' muted' : ''}" title="${esc(e.actor || '')}">${esc(sysActor || e.actor || '—')}</td>
+    <td class="note-c">${auditDetails(e)}</td></tr>`;
+}
+function renderAudit(){
+  const d = state.audit, err = viewError();
+  objectOptions($('audObj'), d?.facets?.objects || [], state.audObj);
+  $('audType').value = state.audType;
+  const q = new URLSearchParams();
+  if (state.line) q.set('line', state.line);
+  if (state.audObj) q.set('object', state.audObj);
+  if (state.audType) q.set('event', state.audType);
+  $('audCsv').href = '/api/audit.csv' + (q.toString() ? '?' + q : '');
+  if (!d){ swap($('audRows'), `<tr><td colspan="7" class="empty">${esc(err || 'Loading the audit log…')}</td></tr>`); return; }
+  const sub = d.persistent ? 'Every alert raised, acknowledgement and notification, newest first. Entries are append-only: they cannot be edited or deleted. <b>Recorded</b> is your local time; <b>plant time</b> is the monitor’s clock.'
+    : '<b style="color:var(--warning-text)">This server keeps the audit log in memory only</b> (its database could not be opened), so it starts empty after a restart.';
+  if ($('auditSub').__html !== sub){ $('auditSub').innerHTML = sub; $('auditSub').__html = sub; }
+  $('audCount').textContent = err || (d.total > d.entries.length ? `Latest ${d.entries.length.toLocaleString('en-GB')} of ${plural(d.total, 'entry', 'entries')}` : plural(d.total, 'entry', 'entries'));
+  swap($('audRows'), d.entries.map(auditRow).join('') || `<tr><td colspan="7" class="empty">No audit entries${state.audObj || state.audType || state.line ? ' match these filters' : ' yet'}.</td></tr>`);
+  $('audMore').hidden = !(d.total > d.entries.length && state.auditLimit < 1000);
+}
+$('audObj').addEventListener('change', e => { state.audObj = e.target.value; state.auditLimit = 100; state.audit = null; renderAudit(); loadView(); });
+$('audType').addEventListener('change', e => { state.audType = e.target.value; state.auditLimit = 100; state.audit = null; renderAudit(); loadView(); });
+$('audMoreBtn').addEventListener('click', () => { state.auditLimit = Math.min(1000, state.auditLimit + 100); loadView(); });
+
+// 'Open alert' from the audit log or a run: only when the monitor still holds that alert (same id and raised time)
+async function openAlertLink(id, raisedAt){
+  try {
+    const d = await api(`/api/alerts/${encodeURIComponent(id)}`);
+    if (raisedAt && d.alert.raisedAt !== raisedAt) throw Object.assign(new Error('reused id'), {status: 404});
+    if ($('run').open) $('run').close();
+    location.hash = '#alert=' + encodeURIComponent(id);
+  } catch (err) {
+    toast(err.status === 404 ? 'This alert was raised before the monitor last restarted, so it can no longer be opened. Its record stays in the audit log.'
+      : 'Could not open the alert: the monitor did not answer. Try again.');
+  }
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-open-alert]');
+  if (b) openAlertLink(b.dataset.openAlert, b.dataset.raised || null);
+});
+
+// ---------- events
+function select(id, pinned = false, obj = null){
+  if (!id || id === state.selectedId){ state.focusAfterRender = false; return; }
+  if (!state.connected){              // the alert can't load: keep row and panel on the alert already shown
+    state.focusAfterRender = false; toast('Reconnect to open other alerts: the connection to the monitor is lost.', 'offline'); return;
+  }
+  state.selectedId = id; state.pinned = pinned; state.ackError = null;
+  // the object whose row stays marked: the clicked row, the row listing this alert, or (a chip) the panel's object
+  const listed = state.overview?.objects.find(o => o.alerts.some(a => a.id === id));
+  state.selObj = obj || (listed ? listed.line + '|' + listed.objectId : state.detail ? state.detail.alert.line + '|' + state.detail.alert.objectId : null);
+  renderRows(); renderDetail();
+  api(`/api/alerts/${encodeURIComponent(id)}`).then(d => {
+    if (state.selectedId !== id) return;                 // a newer selection won
+    state.detail = d; state.selObj = d.alert.line + '|' + d.alert.objectId; render();
+  }).catch(() => {});
+}
+$('rows').addEventListener('click', e => {
+  if (e.target.closest('#toggleUnmon')){
+    const showing = $('toggleUnmon').getAttribute('aria-expanded') === 'true';
+    state.showUnmonitored = !showing; renderRows(); $('toggleUnmon')?.focus(); return;
+  }
+  const row = e.target.closest('tr.alertrow'); if (!row) return;
+  if (e.target.closest('.more')){
+    state.othersOpenFor = row.dataset.obj; state.scrollToOthers = true;
+    if (row.classList.contains('sel')){ $('detail').__html = null; renderDetail(); return; }
+  }
+  select(row.dataset.id, false, row.dataset.obj);
+});
+$('rows').addEventListener('keydown', e => {
+  if (e.key === 'Enter' || e.key === ' '){ const r = e.target.closest('tr.alertrow'); if (r && e.target === r){ e.preventDefault(); select(r.dataset.id, false, r.dataset.obj); } }
+  if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && e.target.matches('tr.alertrow')){
+    const rows = [...document.querySelectorAll('tr.alertrow')], i = rows.indexOf(e.target);
+    const next = rows[i + (e.key === 'ArrowDown' ? 1 : -1)];
+    if (next){ e.preventDefault(); next.focus(); }
+  }
+});
+$('detail').addEventListener('toggle', e => {
+  if (e.target.id === 'others' && state.detail){
+    const key = state.detail.alert.line + '|' + state.detail.alert.objectId;
+    if (e.target.open) state.othersOpenFor = key; else if (state.othersOpenFor === key) state.othersOpenFor = null;
+  }
+}, true);
+$('detail').addEventListener('scroll', updateBtnShadow, {passive:true});
+// shadow under the sticky table header only while it is stuck
+document.querySelector('.left').addEventListener('scroll', e => {
+  const left = e.currentTarget, th = left.querySelector('thead th');
+  left.classList.toggle('stuck', !!th && th.getBoundingClientRect().top <= left.getBoundingClientRect().top + 1 && left.scrollTop > 0);
+}, {passive:true});
+window.addEventListener('resize', updateBtnShadow);
+$('detail').addEventListener('click', async e => {
+  // a chip or 'Back to latest' disappears in the new panel, so focus moves to a stable target after it renders
+  const chip = e.target.closest('.chip');
+  if (chip){ state.focusAfterRender = true; select(chip.dataset.id, true); return; }
+  const latest = e.target.closest('#latestBtn');
+  if (latest){ state.focusAfterRender = true; select(latest.dataset.latest, true); return; }
+  const action = e.target.closest('[data-action]')?.dataset.action;
+  if (action === 'all-lines'){ $('line').value = ''; $('line').dispatchEvent(new Event('change')); return; }
+  if (action === 'all-data'){ $('period').value = 'all'; $('period').dispatchEvent(new Event('change')); return; }
+  const btn = e.target.closest('button');
+  if (btn?.id === 'ackBtn' && state.detail && !btn.disabled && !state.acking){
+    if (state.ackOpen) closeAckPop(); else openAckPop();
+    return;
+  }
+  if (btn?.id === 'runBtn') renderRun();
+});
+$('run').addEventListener('click', e => { if (e.target.id === 'closeRun' || e.target === $('run')) $('run').close(); });
+$('run').addEventListener('close', () => { const el = runReturn?.(); (el || $('runBtn'))?.focus({preventScroll:true}); runReturn = null; });
+$('toastClose').addEventListener('click', hideToast);
+$('period').addEventListener('change', e => { state.period = e.target.value; refresh(); if (state.view === 'runs'){ state.runs = null; state.runsShown = 100; renderRuns(); loadView(); } });
+$('line').addEventListener('change', e => {
+  state.line = e.target.value; state.selectedId = null; state.selObj = null; state.pinned = false; state.showUnmonitored = null;
+  state.runObj = ''; state.audObj = ''; state.runsShown = 100; state.auditLimit = 100;   // an object of another line would show nothing
+  refresh();
+  if (state.view !== 'overview'){ state.runs = null; state.audit = null; renderView(); loadView(); }
+});
+
+// A notification links to /#alert=<id>: open that alert in the panel (kept even when it is outside the period).
+function openFromHash(){
+  const m = location.hash.match(/^#alert=(.+)$/);
+  if (!m) return false;
+  let id; try { id = decodeURIComponent(m[1]); } catch { return false; }
+  history.replaceState(null, '', location.pathname + location.search);   // a later reload starts normally
+  state.selectedId = id; state.pinned = true; state.selObj = null; state.detail = null; state.ackError = null;
+  return true;
+}
+window.addEventListener('hashchange', () => {
+  if (openFromHash()){ applyView(); refresh(); }
+  else applyView(true);
+});
+openFromHash();
+applyView();
+refresh();
+</script>
+</body>
+</html>

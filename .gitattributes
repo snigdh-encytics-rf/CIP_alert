@@ -1,0 +1,2 @@
+# Notebook outputs contain client data: strip them on commit (filter set in .git/config)
+*.ipynb filter=stripoutput

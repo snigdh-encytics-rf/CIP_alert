@@ -1,0 +1,59 @@
+# CIP Monitor demo: `docker compose up -d --build`, then open http://localhost:8000
+# (or http://localhost:$CIP_PORT). The client's log files in ./datasets are mounted
+# read-only at /data; they are never copied into the image. Settings come from a `.env` file next to
+# this one (copy .env.example; never commit real secrets) or from the shell.
+services:
+  cip-monitor:
+    build:
+      context: ./cip_backend
+    image: cip-monitor:latest
+    container_name: cip-monitor
+    ports:
+      - "${CIP_PORT:-8000}:8000"
+    volumes:
+      - ./datasets:/data:ro
+      - cip-state:/state               # SQLite: acknowledgements, audit log, run history (survives re-creation)
+    environment:
+      CIP_SPEED: "${CIP_SPEED:-60}"    # x real time; 60 = one simulated minute per second
+      CIP_START: "${CIP_START:-}"      # e.g. "2026-07-24 06:00"; empty = 2 days before the end of the logs
+      CIP_MODE: "${CIP_MODE:-replay}"  # replay = play the logs; live = gateways POST /api/readings
+      CIP_INGEST_TOKEN: "${CIP_INGEST_TOKEN:-}"   # live mode: required bearer token for POST /api/readings
+      CIP_STALE_AFTER_SECONDS: "${CIP_STALE_AFTER_SECONDS:-180}"   # live mode: no reading for this long = "Stale"
+      CIP_DB_PATH: "${CIP_DB_PATH:-/state/cip_monitor.db}"   # SQLite file on the cip-state volume
+      CIP_OBJECT_ALIASES: "${CIP_OBJECT_ALIASES:-}"   # empty = name mapping on (rules/object_aliases.json); off = notebook matching only
+      CIP_PROPOSED_RULES: "${CIP_PROPOSED_RULES:-show}"   # off | show (panel only) | alert: proposed T/A/C rules, pending Danone sign-off
+      # Notifications (all off unless set): Teams webhook and/or SMTP email for alerts raised while live
+      CIP_TEAMS_WEBHOOK: "${CIP_TEAMS_WEBHOOK:-}"
+      CIP_PUBLIC_URL: "${CIP_PUBLIC_URL:-}"            # e.g. http://cip-monitor.plant.local:8000, for the link in messages
+      CIP_SMTP_HOST: "${CIP_SMTP_HOST:-}"
+      CIP_SMTP_PORT: "${CIP_SMTP_PORT:-587}"
+      CIP_SMTP_USER: "${CIP_SMTP_USER:-}"
+      CIP_SMTP_PASSWORD: "${CIP_SMTP_PASSWORD:-}"
+      CIP_SMTP_FROM: "${CIP_SMTP_FROM:-}"
+      CIP_SMTP_TO: "${CIP_SMTP_TO:-}"
+      CIP_SMTP_STARTTLS: "${CIP_SMTP_STARTTLS:-1}"
+      CIP_NOTIFY_LINES: "${CIP_NOTIFY_LINES:-}"        # e.g. M11W01,M11W02; empty = all lines
+      CIP_NOTIFY_MIN_INTERVAL: "${CIP_NOTIFY_MIN_INTERVAL:-300}"   # seconds between messages per object
+      CIP_NOTIFY_IN_REPLAY: "${CIP_NOTIFY_IN_REPLAY:-0}"   # 1 = also notify while replaying the logs (demo)
+      CIP_NOTIFY_MAX_LAG_MINUTES: "${CIP_NOTIFY_MAX_LAG_MINUTES:-10}"   # live: skip alerts from a backlog upload
+      TZ: "${TZ:-UTC}"
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/status', timeout=4)"]
+      interval: 15s
+      timeout: 5s
+      start_period: 60s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  cip-state:

@@ -1,0 +1,23 @@
+# Keep the build context small and free of client data.
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.DS_Store
+.git
+.gitignore
+tests/
+output/
+outputs/
+datasets/
+state/
+**/*.db
+**/*.db-wal
+**/*.db-shm
+**/*.xlsx
+**/*.ipynb
+notebooks/
+docs/
+requirements-dev.txt
+Dockerfile
+.dockerignore
+README.md

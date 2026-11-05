@@ -1,31 +1,38 @@
-# CIP Alerting
+# CIP Monitor
 
-This project compares actual CIP cycles from the CIP log files with the expected timing and flow thresholds from the pre-rinse timer workbook.
+CIP alerting for Danone's Ambala plant. It compares each CIP run in the CIP log files with the expected durations and flows in the pre-rinse timer workbook, and raises an alert when an activity runs more than 10% over its threshold.
 
-## Main notebook
+## Contents
 
-Start with [`denon_cip_alerting.ipynb`](denon_cip_alerting.ipynb). This is the main notebook for building and reviewing the CIP threshold alerting system.
+| Path | What it is |
+|---|---|
+| [`cip_backend/`](cip_backend/) | The product: the alerting backend, a live monitor fed by 60-second readings, the web UI and the tests. See [`cip_backend/README.md`](cip_backend/README.md). |
+| [`docker-compose.yml`](docker-compose.yml) | Runs the monitor in Docker. |
+| [`.env.example`](.env.example) | Every setting, with comments. |
+| [`denon_cip_alerting_clean.ipynb`](denon_cip_alerting_clean.ipynb) | The analysis notebook the backend logic comes from. Its outputs are stripped on commit. |
+| [`cip_backend/docs/TACT_rules_proposal.md`](cip_backend/docs/TACT_rules_proposal.md) | Proposed temperature, flow and concentration rules, pending Danone sign-off. |
 
-The other notebooks are supporting analysis and data-story notebooks.
+## Quick start
 
-## Required files
+1. Put the data in `datasets/` (see below).
+2. From this folder, run:
 
-Put the following files in the `datasets/` folder before running the notebooks:
+   ```bash
+   docker compose up -d --build
+   ```
 
-- One or more CIP log workbooks named like `CIP_Log*.xlsx`.
-- `CIP Pre Rinse Timer details.xlsx`.
+3. Open http://localhost:8000.
 
-The timer workbook should contain:
+To run without Docker, see [`cip_backend/README.md`](cip_backend/README.md).
 
-- A `Summary` sheet with the proposed pre-rinse, caustic, acid, and flow set points.
-- A `Process CIP Water Consumption` sheet used to calculate the final-rinse total from the four final-rinse steps.
+## Data
 
-Datasets are intentionally excluded from GitHub. Keep the folder structure like this:
+The datasets are client data and are not in this repository; `.gitignore` excludes them. Put these files in `datasets/`:
 
 ```text
 datasets/
-├── CIP_Log-<timestamp>.xlsx
-└── CIP Pre Rinse Timer details.xlsx
+├── CIP_Log-<timestamp>.xlsx          one or more CIP log workbooks
+└── CIP Pre Rinse Timer details.xlsx  reference thresholds (Summary and Process CIP Water Consumption sheets)
 ```
 
-After adding the files, open `denon_cip_alerting.ipynb`, run the cells from top to bottom, and review the cycles flagged as outside their thresholds.
+Docker mounts them read-only. They are never copied into the image.

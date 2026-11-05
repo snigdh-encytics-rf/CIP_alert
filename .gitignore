@@ -2,3 +2,22 @@ datasets/*
 !datasets/.gitkeep
 .DS_Store
 
+.env
+
+# Client data and anything derived from it: never commit
+*.xlsx
+*.xls
+*.csv
+*.db
+*.db-*
+cip_backend/state/
+cip_backend/output/
+
+# Python / tooling
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Scratch material
+extra_not needed for agents/

@@ -1,0 +1,15 @@
+{
+  "_about": "Log objects whose reference-workbook row has no equipment code (or a wrong one), so the code match in thresholds.py cannot find them. Used only when the code match fails. Switch off with CIP_OBJECT_ALIASES=off (restores the notebook's 221 alerts). To be confirmed by Danone.",
+  "aliases": {
+    "C01C01-RMT Tank-1": "RMT1",
+    "C01C02-RMT Tank-2": "RMT2",
+    "C01C03-RMT Tank-3": "RMT3",
+    "C01W03-RMT To Reception line": "RMT to Reception",
+    "R01W01-Milk Reception Line": "Milk Reception",
+    "M01W02_CC01 - Raw Milk Tanker": "Raw Milk Tanker",
+    "C01W02-Milk Past-2": "M11W02_15_C10W02_MILK PAST 2"
+  },
+  "notes": {
+    "C01W02-Milk Past-2": "The workbook row carries code C10W02 (already used by C10W02 Cream To RMT); C01W02 is assumed to be a typo."
+  }
+}
